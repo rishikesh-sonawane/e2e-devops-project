@@ -15,7 +15,8 @@
 - [x] Phase 0 — Planning & Architecture (docs aligned to a single vision: README, docs/, AGENTS.md, .ai_memory/)
 - [x] AI collaboration setup documented (Freebuff primary + OpenCode Zen occasional, ADR-08)
 - [x] Directory Skeleton + .gitignore Created
-- [ ] Application Code (FastAPI + boto3 for S3/DynamoDB/Lambda/SNS)
+- [x] Phase 1 — Application Foundation (FastAPI: /health /version /metrics /config + config module + unit tests)
+- [ ] Application Code — ImageFlow pipeline (boto3: S3/DynamoDB/Lambda/SNS upload → process → retrieve)
 - [ ] Local Docker Containerization
 - [ ] Local Kubernetes Cluster & Helm Chart Setup (Floci EKS)
 - [ ] Infrastructure as Code (Terraform for S3/DynamoDB/Lambda/SNS)

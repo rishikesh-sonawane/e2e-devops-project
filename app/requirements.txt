@@ -1,0 +1,18 @@
+# ImageFlow API — pinned dependencies (verified working, Aug 2026)
+# Install:  python -m venv .venv && source .venv/bin/activate
+#           pip install -r app/requirements.txt
+# Run:      uvicorn app.main:app --reload   (from the repo root)
+
+# ── Runtime ─────────────────────────────────────────────────────────
+fastapi==0.141.1
+uvicorn[standard]==0.52.1
+boto3==1.43.63
+python-multipart==0.0.32
+prometheus-client==0.26.0
+pydantic==2.13.4
+pydantic-settings==2.14.2
+
+# ── Dev / quality ───────────────────────────────────────────────────
+httpx==0.28.1        # TestClient transport
+pytest==9.1.1
+ruff==0.16.1

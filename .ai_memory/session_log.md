@@ -26,4 +26,6 @@
 
 - Pinned git author identity at repo-local level (Rishikesh / rishikeshsonawane1465@gmail.com) and added AGENTS.md §3.6 Git Identity rule — every commit is authored by the repository owner, never the assistant.
 
+- Phase 1 built & verified: app/main.py (ops endpoints), app/config/settings.py (env-driven, secrets masked), unit tests (5 passed), ruff clean, live uvicorn smoke test OK. Pinned app/requirements.txt. Run convention standardized to repo-root venv + `uvicorn app.main:app`; docs updated (setup/README/architecture).
+
 <!-- Future sessions: append new entries below, never edit above. -->

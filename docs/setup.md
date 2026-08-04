@@ -21,13 +21,14 @@ Everything in this project is **100% free**. This guide installs the exact toolc
 
 ### Python Environment Hygiene
 
-Always isolate dependencies:
+Always isolate dependencies (venv lives at the **repo root**):
 
 ```bash
-cd app
+# from the repository root
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r app/requirements.txt
+uvicorn app.main:app --reload    # run the API from the repo root
 ```
 
 ---

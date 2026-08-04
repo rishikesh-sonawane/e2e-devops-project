@@ -575,9 +575,8 @@ cd terraform
 terraform init
 terraform apply
 
-# Run the application
-cd ../app
+# Run the application (venv at the repo root)
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --reload
+pip install -r app/requirements.txt
+uvicorn app.main:app --reload
 ```

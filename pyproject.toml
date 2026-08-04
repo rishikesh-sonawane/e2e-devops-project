@@ -1,0 +1,13 @@
+# Tool configuration — pytest & ruff (Phase 6 Code Quality)
+# Run from repo root:  source .venv/bin/activate && pytest -q
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["app/tests", "tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

@@ -82,11 +82,10 @@ aws s3 mb s3://imageflow-check
 cd terraform
 terraform init && terraform apply
 
-# 4. Run the API locally
-cd ../app
+# 4. Run the API locally (venv at the repo root)
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --reload
+pip install -r app/requirements.txt
+uvicorn app.main:app --reload
 
 # 5. Try it
 curl -X POST -F "file=@photo.jpg" http://localhost:8000/api/v1/images
