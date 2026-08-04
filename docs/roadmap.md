@@ -92,7 +92,7 @@ Build (`scripts/`):
 - `cleanup.sh` — resource cleanup
 - `backup.sh` — backup script
 
-> Skeleton landed ✅ via `feature/p4-bash-scripts` (`1d5c3d5`). **`health-check.sh` implemented** ✅ (API `/health` + Floci checks, flags + env overrides, exit 0/1/2; behavior tests 7/7 in `scripts/tests/`) via `feature/p4-health-check` (`8cb61ea`). Remaining: real logic for deploy/cleanup/backup + shellcheck integration.
+> **Phase 4 complete** ✅ — all four scripts implemented with behavior tests (26/26), `scripts/lint.sh` shellcheck-clean, merged as `434a333`. Sequence: skeleton (`1d5c3d5`) → health-check (`8cb61ea`) → full suite (`434a333`).
 
 Interview Topics: exit codes, process substitution, command substitution, shell expansion.
 

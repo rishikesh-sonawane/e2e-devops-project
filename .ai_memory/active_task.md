@@ -1,7 +1,7 @@
 # Active Task State
 
 ## Current Focus
-**Phase 2 (Source Control) complete and practiced** — workflow ran end-to-end twice (feature/p4-bash-scripts `1d5c3d5`, feature/p4-health-check `8cb61ea`). **Phase 4 (Bash & Automation) in progress** — `health-check.sh` fully implemented with behavior tests (7/7 pass: `scripts/tests/test_health-check.sh`); `deploy.sh`/`cleanup.sh`/`backup.sh` still skeletons. Phase 1 (API foundation) remains verified: pytest 5/5, ruff clean, live smoke test passed.
+**Phase 4 (Bash & Automation) COMPLETE** — all four scripts implemented with behavior tests (26/26 pass across 4 suites) and `scripts/lint.sh` shellcheck-clean (installed via brew). Phase 2 (Source Control) complete and practiced (3 feature branches merged via squash). Phase 1 (API foundation) verified: pytest 5/5, ruff clean. **Next decision: the ImageFlow pipeline endpoints (S3/DynamoDB via Floci) or Phase 7 containerization (Dockerfile).**
 
 ## Immediate Next Steps
 1. [x] Scaffold the repository structure and a production-ready `.gitignore`.
@@ -10,8 +10,9 @@
 4. [x] Test the FastAPI application locally (venv + uvicorn + smoke test; Floci not required for ops endpoints).
 5. [x] Phase 2 — Source Control: branching strategy (feature/*), commit conventions, PR workflow, release tagging — documented in `docs/source-control.md`.
 6. [x] Practice the Git workflow on real work: `feature/p4-bash-scripts` → 6 conventional commits → squash merge → branch deleted (PR steps activate once a remote exists).
-7. [ ] Phase 4 — implement real logic in scripts/: health-check.sh ✅ done (tests 7/7); remaining: deploy.sh, cleanup.sh, backup.sh + shellcheck integration (install via `brew install shellcheck`).
-8. [ ] Phase 7+ — Dockerfile, CI/CD, Terraform, Helm, etc. (see docs/roadmap.md).
+7. [x] Phase 4 — Bash & Automation: all four scripts implemented + 26 tests + shellcheck (merged `434a333`).
+8. [ ] Build the ImageFlow pipeline endpoints (POST /api/v1/images upload → S3 + DynamoDB via Floci) — the app's core.
+9. [ ] Phase 7+ — Dockerfile, CI/CD, Terraform, Helm, etc. (see docs/roadmap.md).
 
 
 ## Blockers / Risks
