@@ -22,4 +22,6 @@
 
 - Added `.ai_memory/README.md` — user guide for the memory workflow (load → sync per step → commit → crash recovery → verify test). Cross-linked from AGENTS.md §3.1, docs/setup.md §5, SYSTEM_CONTEXT.md.
 
+- Scaffolded repository per canonical structure (app/, app/tests/, lambda/image-processor/, terraform/, helm/imageflow/, scripts/, .github/workflows/, tests/) with placeholder READMEs + `app/__init__.py`; added production `.gitignore`; docs updated to point at it; fixed uvicorn run command in README + architecture for the `app/` package layout.
+
 <!-- Future sessions: append new entries below, never edit above. -->

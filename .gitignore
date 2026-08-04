@@ -1,0 +1,79 @@
+# ─── Secrets & credentials ─────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+aws-credentials.json
+
+# ─── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+.venv/
+venv/
+env/
+ENV/
+
+# ─── Terraform / OpenTofu ──────────────────────────────────────────
+.terraform/
+.terraform.lock.hcl.tmp
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+override.tf
+override.tf.json
+terraform.rc
+.terraformrc
+# NOTE: .terraform.lock.hcl IS committed (dependency pinning)
+
+# ─── Local cloud (Floci) data ──────────────────────────────────────
+data/
+floci-data/
+*.tmp
+
+# ─── Logs & artifacts ──────────────────────────────────────────────
+*.log
+logs/
+artifacts/
+
+# ─── OS / Editor ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── Must NOT be ignored ───────────────────────────────────────────
+# .ai_memory/            <- project memory, commit it
+# .terraform.lock.hcl    <- dependency pinning, commit it

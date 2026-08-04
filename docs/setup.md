@@ -114,36 +114,7 @@ Freebuff and OpenCode drive the workflow, but these extensions keep the editor h
 ## 4. Git & Secret Hygiene
 
 1. `git init` at the project root.
-2. Create a `.gitignore` that **immediately blocks**:
-
-```gitignore
-# Secrets & credentials
-.env
-.env.*
-*.pem
-aws-credentials.json
-
-# Terraform state & local
-.terraform/
-*.tfstate
-*.tfstate.*
-crash.log
-
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-
-# Local cloud data
-data/
-floci-data/
-
-# OS / editor
-.DS_Store
-.idea/
-.vscode/
-```
+2. The **production-ready `.gitignore` is committed at the repo root** — it blocks secrets, `.env`, `*.pem`, Terraform state, `.venv`, Python caches, Floci data, logs, and editor files. Review it before committing anything.
 
 > Your real AWS keys (if any exist anywhere on this machine) must never be committed. In this project you will only ever use dummy `test`/`test` credentials for Floci.
 

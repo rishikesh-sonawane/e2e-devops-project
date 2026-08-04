@@ -1,10 +1,10 @@
 # Active Task State
 
 ## Current Focus
-Phase 0 is complete — the planning documents have been refactored into a single coherent vision (**ImageFlow**, an event-driven image pipeline, 100% free via Floci). Assistant tooling decided: **Freebuff is the only continuous assistant**; OpenCode Zen `big-pickle` is optional between sessions (ADR-08). Next: scaffold the repository and begin Phase 1 (Application Foundation).
+Phase 1 (Application Foundation) in progress — repository scaffolded (canonical structure + production `.gitignore` committed). Next: build the ImageFlow API (`app/main.py`) with the Phase 1 endpoints.
 
 ## Immediate Next Steps
-1. [ ] Scaffold the repository structure (app/, lambda/image-processor/, terraform/, helm/imageflow/, scripts/, .github/workflows/, tests/) and a production-ready `.gitignore`.
+1. [x] Scaffold the repository structure (app/, lambda/image-processor/, terraform/, helm/imageflow/, scripts/, .github/workflows/, tests/) and a production-ready `.gitignore`.
 2. [ ] Write the initial `app/main.py` FastAPI application: `/health`, `/version`, `/metrics`, `/config` endpoints.
 3. [ ] Set up the Python virtual environment and pin `app/requirements.txt` (fastapi, uvicorn, boto3, python-multipart, prometheus-client, pytest); pin `lambda/image-processor/requirements.txt` (pillow) separately per ADR-06.
 4. [ ] Test the FastAPI application locally against Floci (venv + uvicorn + smoke test).
