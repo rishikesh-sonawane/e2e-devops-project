@@ -55,6 +55,12 @@ If a configuration, pipeline execution, or cloud resource operation fails, never
 ### 3.5 Security-No-Compromise
 Zero hardcoded secrets, minimal IAM role access vectors, non-root containers, least-privilege policies, dependency + image scanning in CI.
 
+### 3.6 Git Identity (Author Rule)
+**Every commit is authored by the repository owner — never by the assistant.**
+- `user.name` / `user.email` are pinned in the repo-local git config (`Rishikesh` / `rishikeshsonawane1465@gmail.com`).
+- Never pass `--author`, `-c user.name=`, `-c user.email=`, or set `GIT_AUTHOR_*` / `GIT_COMMITTER_*` on any commit.
+- If a machine lacks the local identity, restore it from the values above (or ask the user) — never invent an identity.
+
 ## 4. Tech Stack Matrix (Single Source of Truth)
 
 | Layer | Choice |

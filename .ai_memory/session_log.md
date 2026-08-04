@@ -24,4 +24,6 @@
 
 - Scaffolded repository per canonical structure (app/, app/tests/, lambda/image-processor/, terraform/, helm/imageflow/, scripts/, .github/workflows/, tests/) with placeholder READMEs + `app/__init__.py`; added production `.gitignore`; docs updated to point at it; fixed uvicorn run command in README + architecture for the `app/` package layout.
 
+- Pinned git author identity at repo-local level (Rishikesh / rishikeshsonawane1465@gmail.com) and added AGENTS.md §3.6 Git Identity rule — every commit is authored by the repository owner, never the assistant.
+
 <!-- Future sessions: append new entries below, never edit above. -->
