@@ -2,6 +2,8 @@
 
 > A single repository that grows with you from an empty folder to a production-inspired platform engineering portfolio — built **100% locally, 100% free**, on [Floci](https://floci.io), the MIT-licensed AWS emulator.
 
+[![CI](https://github.com/rishikesh-sonawane/e2e-devops-project/actions/workflows/ci.yml/badge.svg)](https://github.com/rishikesh-sonawane/e2e-devops-project/actions/workflows/ci.yml)
+
 ---
 
 ## The Vision
@@ -123,6 +125,8 @@ A phase is complete **only when you can confidently explain, implement, troubles
 - ✅ **Phase 1 (Application Foundation)** — FastAPI ops endpoints live, tested (5/5), committed (`1706b26`).
 - ✅ **Phase 2 (Source Control)** — workflow documented (`docs/source-control.md`) and practiced end-to-end (feature branch → conventional commits → squash merge → branch deleted). PR flow activates once a GitHub remote exists (Phase 8).
 - ✅ **Phase 4 (Bash & Automation)** — all four operational scripts implemented + tested (26 tests), `scripts/lint.sh` shellcheck-clean.
-- ✅ **Phase 7 kickoff / Phase 8 kickoff (CI-ready foundation)** — multi-stage non-root Dockerfile (build + smoke verified) and `.github/workflows/ci.yml` (ruff → pytest → shellcheck → docker build), validated locally with `act`; CI goes live on push (GitHub remote now exists).
+- ✅ **Phase 7 kickoff / Phase 8 kickoff (CI-ready foundation)** — multi-stage non-root Dockerfile (build + smoke verified) and `.github/workflows/ci.yml` (ruff → pytest → shellcheck → docker build), validated locally with `act`.
+- ✅ **CI LIVE & GREEN on GitHub** — real runs on every push (`ruff → shellcheck → pytest → docker build`). The first real run caught a shellcheck version skew (apt 0.9.0 vs brew 0.11.0) — fixed by pinning shellcheck v0.11.0 and verified passing. Badge above is live.
 - 🔄 **ImageFlow pipeline — upload/get/list LIVE** — `POST /api/v1/images` → S3 + DynamoDB (PENDING) against Floci, GET with presigned URLs, paginated LIST. Processing (Lambda thumbnail + SNS) next.
+- 🔄 **Lambda image-processor next** — Pillow thumbnail + metadata → `PROCESSED` + SNS `image.processed` (the "process" step of the pipeline).
 - See `.ai_memory/system_state.md` and `.ai_memory/active_task.md` for live status.

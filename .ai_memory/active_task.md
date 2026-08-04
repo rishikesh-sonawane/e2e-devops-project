@@ -12,7 +12,7 @@
 6. [x] Practice the Git workflow on real work: `feature/p4-bash-scripts` → 6 conventional commits → squash merge → branch deleted (PR steps activate once a remote exists).
 7. [x] Phase 4 — Bash & Automation: all four scripts implemented + 26 tests + shellcheck (merged `434a333`).
 8. [x] Build the ImageFlow pipeline endpoints — upload/get/list live against Floci (`9e941dd`).
-9. [ ] Push to origin (main is 1 commit ahead) — activates real GitHub Actions CI + PR workflow.
+9. [x] Push to origin + **CI is LIVE and GREEN** (`f7bd092` — fixed shellcheck version skew caught by first real run).
 10. [ ] Build the Lambda image-processor (Pillow thumbnail + metadata → PROCESSED + SNS event) — `IMAGE_PROCESSING_TRIGGER=s3`.
 11. [ ] Install Terraform/OpenTofu + Helm; Phase 9 Terraform IaC (replace lazy provisioning).
 12. [ ] Phase 11+ — Helm, EKS, monitoring, etc. (see docs/roadmap.md).
