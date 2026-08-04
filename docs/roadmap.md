@@ -166,7 +166,7 @@ Master: networking, identity, compute, storage, load balancing, scaling, securit
 Build (ImageFlow core + expansion):
 - Core: S3 (uploads, thumbs, state, logs), DynamoDB + Streams, Lambda (real Docker), SNS, IAM
 
-> Core ✅ — full pipeline live end-to-end AND Terraform-provisioned (`9b745dc`): upload/get/list (`9e941dd`) + image-backed Lambda (`2065ff1`, Pillow thumbnail + metadata → PROCESSED + SNS image.processed) with **automatic S3-event delivery** (PROCESSED in ~5s). Terraform modules + environments/dev provision S3/DynamoDB/SNS/IAM/ECR/Lambda with Floci S3 remote state + DynamoDB locking; plan idempotent. **Phase 11 ✅ (`51661a5`)** — API also deployed to Floci EKS (real k3s) via helm/imageflow (Deployment/Service/ConfigMap/Secret/HPA); cluster→Floci connectivity + auto-processing verified. **Phase 7/8 inner loop ✅ (`69fe882`)** — CodePipeline → CodeBuild (ruff+pytest → **Kaniko daemonless** build+push) → CodeDeploy (`imageflow-onprem`, auto-rollback) end-to-end Succeeded; GitHub Actions deploy/release workflows; `scripts/setup-inner-loop.sh`; ADR-10 deviation log. Remaining: monitoring, security hardening, troubleshooting lab (Phases 12–17).
+> Core ✅ — full pipeline live end-to-end AND Terraform-provisioned (`9b745dc`): upload/get/list (`9e941dd`) + image-backed Lambda (`2065ff1`, Pillow thumbnail + metadata → PROCESSED + SNS image.processed) with **automatic S3-event delivery** (PROCESSED in ~5s). Terraform modules + environments/dev provision S3/DynamoDB/SNS/IAM/ECR/Lambda with Floci S3 remote state + DynamoDB locking; plan idempotent. **Phase 11 ✅ (`51661a5`)** — API also deployed to Floci EKS (real k3s) via helm/imageflow (Deployment/Service/ConfigMap/Secret/HPA); cluster→Floci connectivity + auto-processing verified. **Phase 7/8 inner loop ✅ (`69fe882`)** — CodePipeline → CodeBuild (ruff+pytest → **Kaniko daemonless** build+push) → CodeDeploy (`imageflow-onprem`, auto-rollback) end-to-end Succeeded; GitHub Actions deploy/release workflows; `scripts/setup-inner-loop.sh`; ADR-10 deviation log. **Phase 12 ✅ (`6397127`)** — deployment strategies proven live on k3s (rolling/rollback/canary/blue-green). Remaining: monitoring, security hardening, troubleshooting lab (Phases 13–17).
 - Expansion (Floci real Docker): EC2 — real Linux containers with SSH, UserData, IMDS; ELB v2 — ALB/NLB with target groups; RDS — real PostgreSQL; ElastiCache — real Valkey/Redis; Auto Scaling — launch configs, ASGs, lifecycle hooks
 
 Interview Topics: networking scenarios, security scenarios, scaling scenarios, HA design.
@@ -186,7 +186,7 @@ Interview Topics: CrashLoopBackOff, pending pods, ImagePullBackOff, DNS failures
 
 ---
 
-## Phase 12 — Deployment Strategies
+## Phase 12 — Deployment Strategies ✅ (complete)
 
 Implement:
 - Rolling updates via Floci ECS/EKS
@@ -194,6 +194,13 @@ Implement:
 - Canary via Floci CodeDeploy + ELB target groups
 - Rollback via CodeDeploy auto-rollback
 - Progressive delivery discussion
+
+> **Complete ✅ (`6397127`)** — all four strategies demonstrated **live on Floci EKS (real k3s)** with measured results, and documented in `docs/deployment-strategies.md` with a reproducible `scripts/demo-deploy-strategies.sh` + `k8s/demo/` manifests:
+> - **Rolling** — explicit chart strategy (RollingUpdate, maxSurge 1 / maxUnavailable 0): v2 upgrade across 3 replicas, incremental pod replacement, zero downtime.
+> - **Rollback** — deliberately broken image → CrashLoopBackOff while old v2 pods stayed healthy → `kubectl rollout undo` restored 3/3; revision trail captured.
+> - **Canary** — v3 canary sharing the Service by replica weight: 80 in-cluster requests → **38× v3 / 42× v2 (~50/50 at 3+3)**, then promoted + cleaned up.
+> - **Blue/Green** — two full stacks + `imageflow-bg` Service: blue v2 live (20/20) → atomic selector flip → green v3 (20/20) → flip back (rollback).
+> - **Floci caveat (honest):** CodeDeploy's lifecycle is *simulated* on Floci (no agent runs the appspec hooks), so real blue/green/canary traffic shifting via CodeDeploy is **not** demonstrable locally — the k3s demos are the genuine ones; the CodeDeploy config (incl. auto-rollback) remains real-AWS-correct.
 
 Interview Topics: deployment failures, rollback strategy, release validation.
 

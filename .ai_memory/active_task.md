@@ -1,7 +1,7 @@
 # Active Task State
 
 ## Current Focus
-**Full ImageFlow stack deployed THREE ways on Floci:** ① event-driven serverless (upload → S3 → auto Lambda → DynamoDB + SNS, Terraform-provisioned, `9b745dc`), ② **Kubernetes (Phase 11, `51661a5`)** — helm/imageflow chart on Floci EKS (real k3s): pod Running, /health ok, HPA live, and ③ **inner-loop CI/CD (Phase 7/8, `69fe882`) LIVE** — CodePipeline (S3 source) → CodeBuild (ruff+pytest gates → **Kaniko daemonless** build+push → ECR) → CodeDeploy (on-premises DG `imageflow-onprem`, auto-rollback), end-to-end **Succeeded**; GitHub Actions `deploy.yml` + `release.yml` written + act-validated; `scripts/setup-inner-loop.sh` reproduces it all. **Next: monitoring (CloudWatch/OpenSearch) + security (IAM/KMS/Secrets) phases.**
+**Phase 12 — Deployment Strategies COMPLETE** (`6397127`): rolling update, rollback, canary, and blue/green all **proven live on Floci EKS (real k3s)** with measured traffic splits (canary 38/42 at 3+3, blue/green 20/20 atomic flips). Chart now ships an explicit RollingUpdate strategy (maxSurge 1 / maxUnavailable 0); `k8s/demo/{canary,blue-green}.yaml` + `scripts/demo-deploy-strategies.sh` (reproducible) + `docs/deployment-strategies.md` (incl. Floci CodeDeploy simulation caveat). **Next: monitoring (CloudWatch/OpenSearch) + security (IAM/KMS/Secrets) phases.**
 
 ## Immediate Next Steps
 
@@ -19,7 +19,8 @@
 11. [x] Terraform 1.15.8 installed (hashicorp tap); **Phase 9/10 IaC live** — S3, DynamoDB, SNS, IAM, ECR, image-backed Lambda + S3 trigger; remote state on Floci; auto-delivery verified.
 12. [x] **Phase 11 — Helm chart + Floci EKS (real k3s)** deployed (`51661a5`): pod Running, /health ok, upload via cluster → auto Lambda → PROCESSED; HPA live; known node-DNS quirk documented.
 13. [x] Phase 7/8 finish — **inner-loop CI/CD LIVE** (`69fe882`): CodePipeline → CodeBuild (buildspec: ruff+pytest → Kaniko build+push) → CodeDeploy (`imageflow-onprem`, auto-rollback) end-to-end Succeeded; GitHub Actions deploy.yml + release.yml; setup-inner-loop.sh; ADR-10 deviation log (Kaniko).
-14. [ ] Monitoring (CloudWatch/OpenSearch), security (IAM/KMS/Secrets), troubleshooting lab (see docs/roadmap.md).
+14. [x] **Phase 12 — Deployment Strategies COMPLETE** (`6397127`): rolling (v2, 3 replicas, explicit strategy) → rollback (broken image → CrashLoop → `rollout undo` → v2 restored, revision trail) → canary (v3 slice, 38/42 split at 3+3 via in-cluster ClusterIP — port-forward pins on Floci) → blue/green (20/20 atomic selector flips + flip-back rollback). Chart strategy block, k8s/demo manifests, docs/deployment-strategies.md, scripts/demo-deploy-strategies.sh. **Floci CodeDeploy cannot do real blue/green/canary (simulated lifecycle) — Kubernetes strategies are the genuine demos.**
+15. [ ] Monitoring (CloudWatch/OpenSearch), security (IAM/KMS/Secrets), troubleshooting lab (see docs/roadmap.md).
 
 
 ## Blockers / Risks
