@@ -62,7 +62,7 @@ Zero hardcoded secrets, minimal IAM role access vectors, non-root containers, le
 - If a machine lacks the local identity, restore it from the values above (or ask the user) — never invent an identity.
 
 ### 3.7 Source Control Workflow
-Follow `docs/source-control.md` for all Git activity: **GitHub Flow** (sacred `main` + short-lived `feature/<phase>-<slug>` branches), **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, …), PRs with passing checks merged via **squash**, and immutable **semver tags** (`vX.Y.Z`). Never commit directly to `main`; never force-push or rewrite pushed history; on conflicts, resolve all markers before `--continue`.
+Follow `docs/source-control.md` for all Git activity: **GitHub Flow** (sacred `main` + short-lived `feature/<phase>-<slug>` branches), **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, …), PRs with passing checks merged via **squash**, and immutable **semver tags** (`vX.Y.Z`). Never commit directly to `main` (genuine-emergency exception only); never force-push `main` or shared branches — rebase + `--force-with-lease` is allowed only on your own pre-merge feature branch; on conflicts, resolve all markers before `--continue`.
 
 ## 4. Tech Stack Matrix (Single Source of Truth)
 

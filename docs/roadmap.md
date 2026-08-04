@@ -64,7 +64,7 @@ Interview Topics: REST APIs, HTTP methods, status codes, stateless architecture,
 
 Master: Git fundamentals, branching, merging, rebasing, cherry-picking, reset vs revert, tags, releases, conflict resolution, Git internals.
 
-Project: branching strategy (`feature/*`), pull request workflow, commit conventions, release tagging — **all defined in `docs/source-control.md`** ✅ (the Phase 2 deliverable; now being practiced on real work).
+Project: branching strategy (`feature/*`), pull request workflow, commit conventions, release tagging — **all defined in `docs/source-control.md`** ✅ (the Phase 2 deliverable; practiced locally — the PR flow activates once a GitHub remote exists, Phase 8).
 
 Interview Topics: merge vs rebase, fast-forward merges, detached HEAD, Git object model.
 

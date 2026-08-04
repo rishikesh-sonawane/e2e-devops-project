@@ -39,7 +39,7 @@ This project uses **GitHub Flow** — the same model GitHub itself recommends fo
 ### The golden rules
 
 1. **Never commit directly to `main`.** (Solo exception allowed only for genuine emergencies — and even then, prefer a branch + PR.)
-2. **Never force-push or rewrite pushed history** on any branch that others (or CI) have seen. Rebase *local* work freely; never rebase what you already pushed.
+2. **Never force-push or rewrite the history of `main` or any shared branch.** On your *own short-lived feature branch* (before merge) you may rebase freely — even after pushing — and update the remote with `git push --force-with-lease` (never plain `--force`). The safety rule in §7's scenario table follows from this.
 3. **Keep branches small.** If a branch grows beyond a day of work or one logical unit, split it.
 
 ---
@@ -91,6 +91,8 @@ type(scope): short imperative summary
 
 Every merge into `main` goes through a PR. The workflow:
 
+> **Note on remotes:** the PR steps below need a remote (e.g. a GitHub repository). None is configured yet — it arrives in **Phase 8** when GitHub Actions CI is wired up. Until then, practice the *branch discipline* locally: feature branch → commits → checks → merge back into `main` (skip only the GitHub UI parts). That is also why early project commits land directly on `main` — legitimate pre-remote, and it stops once the remote exists.
+
 ```
 1. Sync main          git checkout main && git pull
 2. Create branch      git checkout -b feature/p3-foo
@@ -138,7 +140,7 @@ Every merge into `main` goes through a PR. The workflow:
 
 - Every PR is merged with **squash merge** → `main` gets one clean, linear commit per feature.
 - Why: history stays readable (`git log --oneline` = a story of features), the crash-recovery protocol (AGENTS.md §3.3) gets a clean `git log`/`git diff` to reason about, and bisecting bugs stays trivial.
-- The squash commit message = the PR title (which equals the branch's first commit summary, which follows Conventional Commits). This is why the PR title format matters.
+- The squash commit message = the PR title — so the PR title must be a Conventional-Commits summary of the *whole* feature (`feat(api): add POST /api/v1/images upload endpoint`). This is why the PR title format matters.
 
 ---
 
@@ -223,7 +225,7 @@ git reflog
 ## 8. How This Ties Into the Rest of the Project
 
 - **AGENTS.md §3.6** — commits are always authored by the repository owner (Rishikesh); no overrides ever.
-- **AGENTS.md §3.3 (Crash-Safe Recovery)** — relies on a clean, linear `git log` + `git diff`; squash merges keep that story readable.
+- **AGENTS.md §3.3 (Crash-Safe Recovery)** — reads more easily from a clean, linear `git log` + `git diff`; squash merges keep that story readable (recovery itself works with any history shape).
 - **Phase 8 (CI/CD)** — GitHub Actions will enforce these rules automatically (conventional-commit lint, branch protection on `main`, required checks). Until then, the rules are enforced by discipline + this document.
 - **Phase 16 (GitOps)** — `main` becomes the declarative source of truth for deployments; this strategy is the foundation.
 - **docs/setup.md §4** — secret hygiene pairs with "never commit secrets" above.

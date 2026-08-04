@@ -32,4 +32,6 @@
 
 - Phase 2 kickoff: wrote `docs/source-control.md` — the Git workflow contract (GitHub Flow: sacred `main` + short-lived `feature/<phase>-<slug>`; Conventional Commits with type table; PR workflow + squash merge + Definition of Done; semver release tags; everyday command cheat sheet; common-scenario playbook). Cross-linked from README (docs table + current status), roadmap Phase 2, AGENTS.md §3.7; `.ai_memory` synced. Next: practice the workflow on the next phase's real work.
 
+- Review pass on Phase 2: fixed force-push contradiction (§2 now allows rebase + `--force-with-lease` on own pre-merge feature branch only), clarified the remote gap (PR flow activates in Phase 8 — until then local feature-branch discipline, which also explains early direct-to-main commits), softened the crash-recovery §8 claim, fixed the squash-message parenthetical, aligned AGENTS.md §3.7 wording.
+
 <!-- Future sessions: append new entries below, never edit above. -->

@@ -121,5 +121,5 @@ A phase is complete **only when you can confidently explain, implement, troubles
 
 - ✅ **Phase 0 (Planning & Architecture)** — this documentation set is the deliverable.
 - ✅ **Phase 1 (Application Foundation)** — FastAPI ops endpoints live, tested (5/5), committed (`1706b26`).
-- 🔄 **Phase 2 (Source Control)** — workflow documented in `docs/source-control.md`; being adopted (feature branches + PRs).
+- 🔄 **Phase 2 (Source Control)** — workflow documented in `docs/source-control.md`; adopted locally (feature branches); PR flow activates once a GitHub remote exists (Phase 8).
 - See `.ai_memory/system_state.md` and `.ai_memory/active_task.md` for live status.
