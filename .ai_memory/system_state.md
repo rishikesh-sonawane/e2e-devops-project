@@ -32,10 +32,10 @@
 - [ ] Local Kubernetes Cluster & Helm Chart Setup (Floci EKS)
 - [ ] Infrastructure as Code (Terraform for S3/DynamoDB/Lambda/SNS)
 - [ ] GitHub Actions Pipeline (CI/CD)
-- [ ] Floci CodePipeline Inner Loop
+- [x] **Phase 7/8 INNER-LOOP CI/CD LIVE** (`69fe882`): CodePipeline `imageflow-pipeline` (S3 source → CodeBuild → CodeDeploy) end-to-end **Succeeded**. CodeBuild runs the real buildspec — ruff + pytest quality gates, then **Kaniko daemonless** image build + push to Floci ECR (`host.docker.internal:5100/imageflow-api:latest`, verified in registry). CodeDeploy targets on-premises DG `imageflow-onprem` (auto-rollback on failure) — Floci resolves targets via on-premises registration + tags (EC2-tag DGs fail `NoInstancesReachable`); deployment lifecycle is **simulated** by Floci (hooks real-AWS-correct, not executed locally). GitHub Actions `deploy.yml` (gate→test→push+trigger pipeline, uploads source.zip first) + `release.yml` (tag→build+push→terraform validate→GH release) — act dry-runs list all jobs. `scripts/setup-inner-loop.sh` provisions everything idempotently. **ADR-10 = deviation log** (Kaniko: Floci CodeBuild has no docker daemon — proven by probe; toolchain cached in S3; tar:// context required; cwd deleted mid-build → no post_build phase).
 - [ ] Monitoring & Observability
 - [ ] Security Hardening (IAM, Secrets Manager, WAF)
 - [ ] Troubleshooting Lab & Interview Prep
 
 ## Architectural Decisions
-See `.ai_memory/architectural_decisions.md`.
+See `.ai_memory/architectural_decisions.md` (ADR-10 = Kaniko deviation log + Floci CodeDeploy findings).

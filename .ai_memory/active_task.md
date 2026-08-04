@@ -1,7 +1,7 @@
 # Active Task State
 
 ## Current Focus
-**Full ImageFlow stack deployed TWO ways on Floci:** ① event-driven serverless (upload → S3 → auto Lambda → DynamoDB + SNS, Terraform-provisioned, `9b745dc`) and ② **Kubernetes (Phase 11, `51661a5`)** — helm/imageflow chart on Floci EKS (real k3s): API pod Running, /health ok, uploads flow through the cluster and get auto-processed by the Lambda; HPA live. 33/33 tests; CI green. **Next: inner-loop CI/CD (ADR-05)** — push images to ECR + CodePipeline/CodeBuild/CodeDeploy — then monitoring/security phases.
+**Full ImageFlow stack deployed THREE ways on Floci:** ① event-driven serverless (upload → S3 → auto Lambda → DynamoDB + SNS, Terraform-provisioned, `9b745dc`), ② **Kubernetes (Phase 11, `51661a5`)** — helm/imageflow chart on Floci EKS (real k3s): pod Running, /health ok, HPA live, and ③ **inner-loop CI/CD (Phase 7/8, `69fe882`) LIVE** — CodePipeline (S3 source) → CodeBuild (ruff+pytest gates → **Kaniko daemonless** build+push → ECR) → CodeDeploy (on-premises DG `imageflow-onprem`, auto-rollback), end-to-end **Succeeded**; GitHub Actions `deploy.yml` + `release.yml` written + act-validated; `scripts/setup-inner-loop.sh` reproduces it all. **Next: monitoring (CloudWatch/OpenSearch) + security (IAM/KMS/Secrets) phases.**
 
 ## Immediate Next Steps
 
@@ -18,7 +18,7 @@
 10. [x] Build the Lambda image-processor (Pillow thumbnail + metadata → PROCESSED + SNS event) — merged `2065ff1`, 33/33 tests, live-verified; Floci S3-notification wiring confirmed supported.
 11. [x] Terraform 1.15.8 installed (hashicorp tap); **Phase 9/10 IaC live** — S3, DynamoDB, SNS, IAM, ECR, image-backed Lambda + S3 trigger; remote state on Floci; auto-delivery verified.
 12. [x] **Phase 11 — Helm chart + Floci EKS (real k3s)** deployed (`51661a5`): pod Running, /health ok, upload via cluster → auto Lambda → PROCESSED; HPA live; known node-DNS quirk documented.
-13. [ ] Phase 7/8 finish — inner-loop CI/CD (ADR-05): CodePipeline → CodeBuild (real buildspec) → CodeDeploy; release workflow (deploy.yml/release.yml).
+13. [x] Phase 7/8 finish — **inner-loop CI/CD LIVE** (`69fe882`): CodePipeline → CodeBuild (buildspec: ruff+pytest → Kaniko build+push) → CodeDeploy (`imageflow-onprem`, auto-rollback) end-to-end Succeeded; GitHub Actions deploy.yml + release.yml; setup-inner-loop.sh; ADR-10 deviation log (Kaniko).
 14. [ ] Monitoring (CloudWatch/OpenSearch), security (IAM/KMS/Secrets), troubleshooting lab (see docs/roadmap.md).
 
 
