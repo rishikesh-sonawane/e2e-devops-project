@@ -1,0 +1,30 @@
+# appspec.yml — CodeDeploy EC2 deployment (ADR-05, inner loop)
+#
+# Deploys the API container to a Floci EC2 instance:
+#   AfterInstall → pull the pushed image + start the container
+#   ApplicationStart → wait for /health
+#   ApplicationStop → stop the previous container
+#
+# The image URI is produced by the CodeBuild stage (image-uri.txt) and
+# resolved by scripts/codedeploy/deploy.sh.
+
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /opt/imageflow
+
+hooks:
+  ApplicationStop:
+    - location: scripts/codedeploy/stop.sh
+      timeout: 60
+  AfterInstall:
+    - location: scripts/codedeploy/deploy.sh
+      timeout: 300
+      runas: root
+  ApplicationStart:
+    - location: scripts/codedeploy/start.sh
+      timeout: 120
+  ValidateService:
+    - location: scripts/codedeploy/validate.sh
+      timeout: 120

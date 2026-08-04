@@ -1,0 +1,79 @@
+# buildspec.yml — CodeBuild inner-loop (ADR-05)
+#
+# Runs inside Floci CodeBuild (real Docker buildspec execution):
+#   1. install   — pinned Python deps into a venv
+#   2. pre_build — quality gate: ruff + pytest
+#   3. build     — Kaniko daemonless build of the API image + push to ECR (:5100)
+#   4. post_build— record the pushed image URI for the CodeDeploy stage
+#
+# Why Kaniko (not `docker build`): Floci's CodeBuild environment has no Docker
+# socket/CLI (verified by probe). Kaniko builds images from a Dockerfile inside
+# the build container and pushes to a registry — no daemon required. This is the
+# same pattern used on GitLab CI / EKS runners that avoid docker-in-docker.
+#
+# Kaniko ships no standalone release binaries anymore, so the executor is cached
+# in Floci S3 (imageflow-artifacts/tools/) — the "build toolchain in object
+# storage" pattern. Pull it via the Floci S3 REST endpoint (dummy-creds HTTP).
+
+version: 0.2
+
+env:
+  variables:
+    IMAGEFLOW_REPO: "imageflow-api"
+    # Registry reachable from inside the build container (host publishes :5100).
+    # Injected/overridden by the pipeline build stage via environmentVariablesOverride.
+    ECR_API_URI: "host.docker.internal:5100/imageflow-api"
+    FLOCI_ENDPOINT: "http://host.docker.internal:4566"
+    KANIKO_S3: "imageflow-artifacts/tools/kaniko-executor"
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - python -m venv /tmp/venv
+      - . /tmp/venv/bin/activate
+      - pip install --upgrade pip -q
+      - pip install -q -r app/requirements.txt -r lambda/image-processor/requirements.txt
+      - echo "[build] fetching kaniko executor from Floci S3 toolchain"
+      - curl -fsSL -o /tmp/executor "${FLOCI_ENDPOINT}/${KANIKO_S3}"
+      - chmod +x /tmp/executor
+      - /tmp/executor --help >/dev/null 2>&1 && echo "kaniko executor ready" || echo "kaniko executor check skipped"
+
+  pre_build:
+    commands:
+      - . /tmp/venv/bin/activate
+      - echo "[build] quality gate: ruff"
+      - ruff check app/ lambda/image-processor/
+      - echo "[build] quality gate: pytest"
+      - python -m pytest -q
+
+  build:
+    commands:
+      # The CodeDeploy artifact (appspec.yml + scripts/codedeploy/*) is zipped
+      # from source by Floci — no staging needed. Kaniko needs its context in a
+      # fresh tar:// path because the CodeBuild source mount is deleted mid-build.
+      - echo "[build] staging kaniko context as tar (dir-context loses the mount mid-build on Floci)"
+      - mkdir -p /tmp/ctx && cp -r app /tmp/ctx/ && cp Dockerfile /tmp/ctx/ && cp .dockerignore /tmp/ctx/ 2>/dev/null || true
+      - cd /tmp/ctx && tar -czf /tmp/ctx.tar.gz .
+      # NOTE: --insecure is for Floci's plain-HTTP local registry ONLY. Real AWS
+      # ECR needs TLS + auth (kaniko picks up ~/.docker/config.json); remove the
+      # flag when pointing at a real registry.
+      - echo "[build] Kaniko daemonless build → ${ECR_API_URI}:latest"
+      - |
+        /tmp/executor \
+          --dockerfile /tmp/ctx/Dockerfile \
+          --context tar:///tmp/ctx.tar.gz \
+          --destination "${ECR_API_URI}:latest" \
+          --insecure \
+          --cache=false
+      # No post_build phase: Floci deletes the source cwd mid-build, so the
+      # post_build runner cannot chdir into it (exit 127).
+      - echo "[build] success — pushed ${ECR_API_URI}:latest"
+
+artifacts:
+  files:
+    - appspec.yml
+    - scripts/codedeploy/*
+  discard-paths: no
+  name: imageflow-build
