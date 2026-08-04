@@ -18,4 +18,6 @@
 
 - Stress-tested crash recovery (simulated fresh session following AGENTS.md §3.3): memory files + journal reconstructed the exact on-disk state; no work lost. **Gap found:** no baseline git commit yet, so `git diff` cannot contribute to recovery until the initial commit is made (commit README, docs/, AGENTS.md, .ai_memory/).
 
+- Baseline committed: `2cd1d0f` (root commit, main, 10 files / 1475 insertions). Gap closed — `git log`/`git diff` now serve as the second source of truth for crash recovery. Working tree clean.
+
 <!-- Future sessions: append new entries below, never edit above. -->
