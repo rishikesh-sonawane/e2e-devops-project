@@ -122,5 +122,5 @@ A phase is complete **only when you can confidently explain, implement, troubles
 - ✅ **Phase 0 (Planning & Architecture)** — this documentation set is the deliverable.
 - ✅ **Phase 1 (Application Foundation)** — FastAPI ops endpoints live, tested (5/5), committed (`1706b26`).
 - ✅ **Phase 2 (Source Control)** — workflow documented (`docs/source-control.md`) and practiced end-to-end (feature branch → conventional commits → squash merge → branch deleted). PR flow activates once a GitHub remote exists (Phase 8).
-- 🔄 **Phase 4 (Bash & Automation)** — `scripts/` skeleton landed (deploy, health-check, cleanup, backup); real logic next.
+- 🔄 **Phase 4 (Bash & Automation)** — `scripts/` skeleton landed; **`health-check.sh` implemented** (API `/health` + Floci checks, tests 7/7); deploy/cleanup/backup logic next.
 - See `.ai_memory/system_state.md` and `.ai_memory/active_task.md` for live status.

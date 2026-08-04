@@ -19,7 +19,8 @@
 - [x] Phase 2 — Source Control (GitHub Flow, Conventional Commits, PR + squash merge, semver tags — `docs/source-control.md`)
 - [x] Phase 2 practiced end-to-end: `feature/p4-bash-scripts` → 6 conventional commits → squash merge → branch deleted
 - [x] Phase 4 kickoff — scripts/ skeleton (deploy, health-check, cleanup, backup: executable contract stubs with `--help`)
-- [ ] Phase 4 — Bash & Automation (real script logic, tests, shellcheck)
+- [x] Phase 4 — health-check.sh **implemented** (API /health + Floci reachability, flags + env overrides, exit 0/1/2) + behavior tests (7/7 pass)
+- [ ] Phase 4 — remaining scripts (deploy/cleanup/backup real logic) + shellcheck integration
 - [ ] Application Code — ImageFlow pipeline (boto3: S3/DynamoDB/Lambda/SNS upload → process → retrieve)
 - [ ] Local Docker Containerization
 - [ ] Local Kubernetes Cluster & Helm Chart Setup (Floci EKS)

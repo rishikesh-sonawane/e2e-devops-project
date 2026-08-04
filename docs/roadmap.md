@@ -92,7 +92,7 @@ Build (`scripts/`):
 - `cleanup.sh` — resource cleanup
 - `backup.sh` — backup script
 
-> Skeleton landed ✅ (executable, `set -euo pipefail`, `--help`, exit codes 0/1/2) via `feature/p4-bash-scripts` (squash-merged `1d5c3d5`) — real logic, tests, and shellcheck next.
+> Skeleton landed ✅ via `feature/p4-bash-scripts` (`1d5c3d5`). **`health-check.sh` implemented** ✅ (API `/health` + Floci checks, flags + env overrides, exit 0/1/2; behavior tests 7/7 in `scripts/tests/`) via `feature/p4-health-check` (`8cb61ea`). Remaining: real logic for deploy/cleanup/backup + shellcheck integration.
 
 Interview Topics: exit codes, process substitution, command substitution, shell expansion.
 

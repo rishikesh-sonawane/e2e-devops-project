@@ -36,4 +36,6 @@
 
 - Practiced Phase 2 end-to-end: branch `feature/p4-bash-scripts` from main → wrote 4 executable script skeletons (deploy/health-check/cleanup/backup) + scripts/README.md → 5 conventional commits → reviewer nit (extra args silently ignored) → `fix(scripts): reject unexpected extra arguments` → re-validated (bash -n, exit 2 on bad flags) → **squash-merged** to main as `1d5c3d5` → feature branch deleted. Main history stays linear; all commits authored by Rishikesh. Phase 4 scripts skeleton now live.
 
+- Phase 4: implemented `health-check.sh` for real on `feature/p4-health-check` (curl API /health must return status=ok + Floci HTTP reachability; `--api-url`/`--floci-url`/`--timeout` flags + `IMAGEFLOW_API_URL`/`FLOCI_ENDPOINT_URL`/`IMAGEFLOW_HEALTH_TIMEOUT` env overrides; exit 0/1/2). Added behavior tests `scripts/tests/test_health-check.sh` (7/7 pass — live FastAPI + mock-Floci servers). Reviewer found `--timeout` accepted garbage (0 would hang curl) → fixed with positive-integer validation; hardened test (readiness guard, symmetric failure reporting). Squash-merged as `8cb61ea`; branch deleted. Note: shellcheck not yet installed on this machine.
+
 <!-- Future sessions: append new entries below, never edit above. -->
