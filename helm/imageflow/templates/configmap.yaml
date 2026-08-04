@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "imageflow.fullname" . }}-config
+  labels:
+    {{- include "imageflow.labels" . | nindent 4 }}
+data:
+  AWS_ENDPOINT_URL: {{ .Values.config.awsEndpointUrl | quote }}
+  AWS_DEFAULT_REGION: {{ .Values.config.awsRegion | quote }}
+  IMAGEFLOW_UPLOADS_BUCKET: {{ .Values.config.uploadsBucket | quote }}
+  IMAGEFLOW_THUMBS_BUCKET: {{ .Values.config.thumbsBucket | quote }}
+  IMAGEFLOW_METADATA_TABLE: {{ .Values.config.metadataTable | quote }}
+  IMAGEFLOW_SNS_TOPIC: {{ .Values.config.snsTopic | quote }}
+  IMAGE_PROCESSING_TRIGGER: {{ .Values.config.imageProcessingTrigger | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}

@@ -1,0 +1,86 @@
+# ImageFlow Helm chart values — deploy the API to Floci EKS (real k3s).
+#
+# Override at install time: helm install imageflow ./helm/imageflow \
+#   --set image.repository=... --set image.tag=...
+
+replicaCount: 1
+
+image:
+  # Image pushed to Floci ECR (:5100 real registry) — see scripts/push-api.sh
+  repository: 000000000000.dkr.ecr.us-east-1.localhost:5100/imageflow-api
+  # Always: `latest` is re-pulled on every rollout, so a new push + helm
+  # upgrade actually deploys the new image (IfNotPresent would keep the stale
+  # cached tag on the node).
+  pullPolicy: Always
+  tag: latest
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  name: ""
+
+# ── App configuration (non-secret → ConfigMap) ──────────────────────
+# The API must reach the Floci control plane from inside the cluster.
+# NOTE: from inside a k3s pod, `localhost` is the pod — use the host
+# gateway (host.docker.internal) to reach Floci running on the host.
+config:
+  awsEndpointUrl: http://host.docker.internal:4566
+  awsRegion: us-east-1
+  uploadsBucket: imageflow-uploads
+  thumbsBucket: imageflow-thumbs
+  metadataTable: ImageFlowMetadata
+  snsTopic: imageflow-events
+  imageProcessingTrigger: direct
+  logLevel: INFO
+
+# ── Dummy credentials → Secret (ADR-02; real AWS would use external secrets) ──
+# Plaintext values; the secret template base64-encodes them (| b64enc).
+secret:
+  awsAccessKeyId: test
+  awsSecretAccessKey: test
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  hosts:
+    - host: imageflow.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+podAnnotations: {}
+podSecurityContext:
+  runAsUser: 1000
+  runAsNonRoot: true
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL

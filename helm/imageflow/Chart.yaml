@@ -1,0 +1,17 @@
+apiVersion: v2
+name: imageflow
+description: ImageFlow API — event-driven image pipeline (FastAPI) deployed to Floci EKS (real k3s).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - imageflow
+  - fastapi
+  - image-processing
+  - devops
+home: https://github.com/rishikesh-sonawane/e2e-devops-project
+sources:
+  - https://github.com/rishikesh-sonawane/e2e-devops-project
+maintainers:
+  - name: Rishikesh
+    email: rishikeshsonawane1465@gmail.com
