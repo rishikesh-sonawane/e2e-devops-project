@@ -129,7 +129,7 @@ Floci runs as a Docker container (or native binary via `floci start`) on port 45
 
 ### 3.5 Infrastructure as Code
 
-Terraform / OpenTofu manages all infrastructure:
+Terraform manages all infrastructure:
 
 ```text
 terraform/

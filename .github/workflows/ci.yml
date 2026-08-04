@@ -59,6 +59,17 @@ jobs:
       - name: Validate pyproject.toml
         run: python -c "import tomllib; tomllib.load(open('pyproject.toml','rb')); print('pyproject.toml OK')"
 
+      - name: Validate Terraform (dev environment)
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.8
+
+      - name: Terraform init (no backend) + validate
+        working-directory: terraform/environments/dev
+        run: |
+          terraform init -backend=false
+          terraform validate
+
   test:
     name: Unit tests
     runs-on: ubuntu-latest

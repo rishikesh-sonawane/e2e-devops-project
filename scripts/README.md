@@ -55,7 +55,7 @@ server standing in for Floci.
 `--skip-terraform` · `--skip-api` · `--skip-smoke` · `-h|--help`
 **Env overrides:** `IMAGEFLOW_TF_DIR` · `IMAGEFLOW_API_HOST` · `IMAGEFLOW_API_PORT` · `FLOCI_ENDPOINT_URL`
 
-**Pipeline:** (1) prereqs — terraform/opentofu, curl, reachable Floci ·
+**Pipeline:** (1) prereqs — terraform, curl, reachable Floci ·
 (2) `terraform init + apply -auto-approve` · (3) start uvicorn from the repo
 venv, wait for `/health` (10s), write `data/api.pid` + `data/api.log` ·
 (4) smoke test via `health-check.sh`.

@@ -50,7 +50,7 @@ set +e; "$DEPLOY" --api-port >/dev/null 2>&1; code=$?; set -e
 set +e; "$DEPLOY" --api-port abc >/dev/null 2>&1; code=$?; set -e
 [ "$code" -eq 2 ] && pass "non-numeric port exits 2 (got $code)" || fail "non-numeric port exits 2 (got $code)"
 
-# 6. Missing terraform/opentofu (hidden via PATH) exits 1
+# 6. Missing terraform (hidden via PATH) exits 1
 set +e
 PATH="/usr/bin:/bin" "$DEPLOY" --skip-api --skip-smoke >/dev/null 2>&1
 code=$?

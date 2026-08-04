@@ -149,7 +149,7 @@ Interview Topics: blue/green, canary, rolling deployments, feature flags, pipeli
 
 Master: declarative infrastructure, state, modules, variables, outputs, workspaces, drift detection, lifecycle rules, remote state, locking.
 
-Build (Terraform/OpenTofu + Floci):
+Build (Terraform + Floci):
 - `terraform/backend.tf` — S3 remote state + DynamoDB locking
 - Modules: `storage`, `database`, `compute`, `messaging`, `iam`, `networking`
 - Environments: `dev/` and `ci/`

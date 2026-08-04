@@ -70,7 +70,7 @@ Follow `docs/source-control.md` for all Git activity: **GitHub Flow** (sacred `m
 |---|---|
 | Application | Python 3.12 + FastAPI (Uvicorn), boto3 |
 | Cloud services | S3, DynamoDB, Lambda, SNS, API Gateway (all via Floci) |
-| Infrastructure as Code | Terraform / OpenTofu (Floci S3 remote state + DynamoDB locking) |
+| Infrastructure as Code | Terraform (Floci S3 remote state + DynamoDB locking) |
 | Containerization | Multi-stage OCI Docker, non-root `python:3.12-slim` |
 | Orchestration | Floci EKS (k3s) + Helm; Floci ECS (Fargate-shaped tasks) |
 | CI/CD | Dual-loop: GitHub Actions (outer) + Floci CodePipeline/CodeBuild/CodeDeploy (inner) |

@@ -12,7 +12,7 @@ Everything in this project is **100% free**. This guide installs the exact toolc
 | Python 3.12+ & pip | FastAPI app + boto3 | https://python.org |
 | Docker Desktop | Containers; powers Floci's real-Docker services (Lambda, RDS, EKS, ECS…) | https://docker.com |
 | AWS CLI v2 | All AWS commands against Floci | https://aws.amazon.com/cli |
-| Terraform / OpenTofu | Infrastructure as Code | https://developer.hashicorp.com/terraform/downloads (or OpenTofu) |
+| Terraform | Infrastructure as Code | https://developer.hashicorp.com/terraform/downloads (brew: `brew install hashicorp/tap/terraform`) |
 | kubectl | Interact with Floci EKS (k3s) clusters | `brew install kubectl` / official docs |
 | Helm | Package K8s manifests | https://helm.sh |
 | Floci CLI | Start the local AWS cloud in milliseconds | `curl -fsSL https://floci.io/install.sh \| sh` |

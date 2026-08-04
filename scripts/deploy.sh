@@ -6,7 +6,7 @@
 # Usage: ./scripts/deploy.sh [OPTIONS]
 #
 # Pipeline (Phase 4):
-#   1. Prerequisites — terraform (or opentofu), curl, reachable Floci
+#   1. Prerequisites — terraform, curl, reachable Floci
 #   2. Terraform — init + apply in terraform/            (skip: --skip-terraform)
 #   3. API — start uvicorn from the repo venv            (skip: --skip-api)
 #   4. Smoke — run scripts/health-check.sh               (skip: --skip-smoke)
@@ -19,7 +19,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly REPO_ROOT
 
 # ── Configuration (env defaults; overridable via flags) ──────────────
-TF_DIR="${IMAGEFLOW_TF_DIR:-$REPO_ROOT/terraform}"
+TF_DIR="${IMAGEFLOW_TF_DIR:-$REPO_ROOT/terraform/environments/dev}"
 API_HOST="${IMAGEFLOW_API_HOST:-127.0.0.1}"
 API_PORT="${IMAGEFLOW_API_PORT:-8000}"
 FLOCI_URL="${FLOCI_ENDPOINT_URL:-http://127.0.0.1:4566}"
@@ -40,7 +40,7 @@ Deploy the ImageFlow stack to the local Floci cloud:
 prerequisites → terraform apply → start API → smoke test.
 
 Options:
-  --tf-dir DIR       Terraform workspace dir (default: \$IMAGEFLOW_TF_DIR or ./terraform)
+  --tf-dir DIR       Terraform workspace dir (default: \$IMAGEFLOW_TF_DIR or ./terraform/environments/dev)
   --api-host HOST    API bind host         (default: \$IMAGEFLOW_API_HOST or 127.0.0.1)
   --api-port PORT    API bind port         (default: \$IMAGEFLOW_API_PORT or 8000)
   --floci-url URL    Floci endpoint URL    (default: \$FLOCI_ENDPOINT_URL or http://127.0.0.1:4566)
@@ -65,20 +65,14 @@ require_cmd() {
 }
 
 step_terraform() {
-    local tf
-    if command -v terraform >/dev/null 2>&1; then
-        tf=terraform
-    else
-        require_cmd opentofu || return 1
-        tf=opentofu
-    fi
+    require_cmd terraform || return 1
     if [ ! -d "$TF_DIR" ]; then
         error "terraform dir not found: $TF_DIR"
         return 1
     fi
     info "terraform: init + apply in $TF_DIR"
-    "$tf" -chdir="$TF_DIR" init
-    "$tf" -chdir="$TF_DIR" apply -auto-approve
+    terraform -chdir="$TF_DIR" init
+    terraform -chdir="$TF_DIR" apply -auto-approve
 }
 
 step_api() {
@@ -142,8 +136,8 @@ main() {
 
     # 1. Prerequisites
     if [ "$SKIP_TF" -eq 0 ]; then
-        if ! command -v terraform >/dev/null 2>&1 && ! command -v opentofu >/dev/null 2>&1; then
-            error "missing prerequisite: terraform or opentofu (see docs/setup.md)"
+        if ! command -v terraform >/dev/null 2>&1; then
+            error "missing prerequisite: terraform (see docs/setup.md)"
             return 1
         fi
     fi

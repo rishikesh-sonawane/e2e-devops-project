@@ -85,8 +85,10 @@ def test_live_process_image_end_to_end(floci_up) -> None:
     )
     _ensure_cloud(s3, ddb, sns)
 
+    # NOTE: objects are placed under `test-only/` (NOT `uploads/`) so the live
+    # S3→Lambda notification (filter_prefix=uploads/) does not race these tests.
     image_id = f"it-{uuid.uuid4()}"
-    original_key = f"uploads/{image_id}/sample.png"
+    original_key = f"test-only/{image_id}/sample.png"
     thumb_key: str | None = None
     try:
         s3.put_object(
@@ -173,7 +175,7 @@ def test_live_process_pending(floci_up) -> None:
     _ensure_cloud(s3, ddb, sns)
 
     image_id = f"it-pending-{uuid.uuid4()}"
-    original_key = f"uploads/{image_id}/sample.png"
+    original_key = f"test-only/{image_id}/sample.png"
     try:
         s3.put_object(
             Bucket=handler.UPLOADS_BUCKET, Key=original_key, Body=PNG_1X1, ContentType="image/png"

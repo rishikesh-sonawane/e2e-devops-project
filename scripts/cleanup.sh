@@ -19,7 +19,7 @@ readonly SCRIPT_NAME
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly REPO_ROOT
 
-TF_DIR="${IMAGEFLOW_TF_DIR:-$REPO_ROOT/terraform}"
+TF_DIR="${IMAGEFLOW_TF_DIR:-$REPO_ROOT/terraform/environments/dev}"
 ASSUME_YES=0
 
 # ── Logging helpers ──────────────────────────────────────────────────
@@ -33,7 +33,7 @@ Usage: $SCRIPT_NAME [OPTIONS]
 Safely tear down local ImageFlow resources.
 
 Options:
-  --tf-dir DIR   Terraform workspace dir (default: \$IMAGEFLOW_TF_DIR or ./terraform)
+  --tf-dir DIR   Terraform workspace dir (default: \$IMAGEFLOW_TF_DIR or ./terraform/environments/dev)
   -y, --yes      Skip the confirmation prompt
   -h, --help     Show this help and exit.
 
@@ -45,7 +45,7 @@ EOF
 }
 
 main() {
-    local tf answer
+    local answer
 
     while [ "$#" -gt 0 ]; do
         case "$1" in
@@ -69,17 +69,12 @@ main() {
         esac
     fi
 
-    # 2. Terraform destroy (only when the workspace exists AND a tf binary is present)
-    if [ -d "$TF_DIR" ] && { command -v terraform >/dev/null 2>&1 || command -v opentofu >/dev/null 2>&1; }; then
-        if command -v terraform >/dev/null 2>&1; then
-            tf=terraform
-        else
-            tf=opentofu
-        fi
+    # 2. Terraform destroy (only when the workspace exists AND terraform is present)
+    if [ -d "$TF_DIR" ] && command -v terraform >/dev/null 2>&1; then
         info "terraform: destroy in $TF_DIR"
-        "$tf" -chdir="$TF_DIR" destroy -auto-approve || { error "terraform destroy failed"; return 1; }
+        terraform -chdir="$TF_DIR" destroy -auto-approve || { error "terraform destroy failed"; return 1; }
     else
-        info "skipping terraform destroy (no $TF_DIR or no terraform/opentofu binary)"
+        info "skipping terraform destroy (no $TF_DIR or no terraform binary)"
     fi
 
     # 3. Runtime artifacts (known filenames only — never rm -rf, never source tree)
