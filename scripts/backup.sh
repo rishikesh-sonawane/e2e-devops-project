@@ -1,17 +1,23 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 #
-# imageflow-backup — snapshot local project state into a timestamped archive.
+# imageflow-backup — snapshot key project state into a timestamped archive.
 #
-# Usage: ./scripts/backup.sh [--help]
+# Usage: ./scripts/backup.sh [--out DIR] [--help]
 #
-# This is a Phase 4 (Bash & Automation) skeleton. It defines the script's
-# contract — flags, exit codes, log output, and the intended backup — and
-# will be fleshed out with real logic in Phase 4. See docs/roadmap.md.
+# Phase 4 behavior:
+#   Archive docs/, scripts/, .ai_memory/, app source, and root docs into
+#   data/backups/imageflow-<timestamp>.tar.gz, then verify the archive.
+#   Git remains the source of truth — this is a convenience snapshot.
 
 set -euo pipefail
 
-readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+readonly SCRIPT_NAME
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly REPO_ROOT
+
+OUT_DIR="${IMAGEFLOW_BACKUP_DIR:-$REPO_ROOT/data/backups}"
 
 # ── Logging helpers ──────────────────────────────────────────────────
 info()  { printf '[INFO]  %s\n' "$*"; }
@@ -19,13 +25,14 @@ error() { printf '[ERROR] %s\n' "$*" >&2; }
 
 usage() {
     cat <<EOF
-Usage: $SCRIPT_NAME [--help]
+Usage: $SCRIPT_NAME [OPTIONS]
 
-Create a timestamped archive of key project state (docs, scripts, .ai_memory)
-under data/backups/. Source of truth remains Git; this is a convenience snapshot.
+Create a timestamped archive of key project state (docs, scripts, .ai_memory,
+app source, root docs) and verify it.
 
 Options:
-  -h, --help    Show this help and exit.
+  --out DIR    Backup directory (default: \$IMAGEFLOW_BACKUP_DIR or data/backups)
+  -h, --help   Show this help and exit.
 
 Exit codes:
   0   success
@@ -35,20 +42,35 @@ EOF
 }
 
 main() {
-    if [ "$#" -gt 1 ]; then
-        error "too many arguments"; usage >&2; return 2
+    local stamp archive size
+
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            -h|--help) usage; return 0 ;;
+            --out)
+                [ "$#" -ge 2 ] || { error "--out requires a value"; usage >&2; return 2; }
+                OUT_DIR="$2"; shift 2 ;;
+            -*) error "unknown option: $1"; usage >&2; return 2 ;;
+            *)  error "unexpected argument: $1"; usage >&2; return 2 ;;
+        esac
+    done
+
+    stamp="$(date +%Y%m%d-%H%M%S)-$$"
+    archive="$OUT_DIR/imageflow-$stamp.tar.gz"
+    mkdir -p "$OUT_DIR"
+
+    info "archiving key state → $archive"
+    tar -czf "$archive" -C "$REPO_ROOT" \
+        docs scripts .ai_memory app \
+        pyproject.toml README.md AGENTS.md
+
+    if ! tar -tzf "$archive" >/dev/null 2>&1; then
+        error "archive verification failed: $archive"
+        return 1
     fi
 
-    case "${1:-}" in
-        -h|--help) usage; return 0 ;;
-        "")        : ;;                       # no args — run the stub
-        *)         error "unknown option: $1"; usage >&2; return 2 ;;
-    esac
-
-    info "$SCRIPT_NAME: Phase 4 skeleton — implementation lands in Phase 4."
-    info "Contract: tar key dirs → data/backups/imageflow-<timestamp>.tar.gz → verify archive."
-    # TODO(Phase 4): real backup logic.
-    return 0
+    size="$(du -h "$archive" | cut -f1)"
+    info "backup complete: $archive ($size)"
 }
 
 main "$@"

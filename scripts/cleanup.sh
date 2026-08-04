@@ -1,17 +1,26 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 #
-# imageflow-cleanup — tear down local resources safely (Terraform destroy + artifacts).
+# imageflow-cleanup — tear down local ImageFlow resources safely.
 #
-# Usage: ./scripts/cleanup.sh [--help]
+# Usage: ./scripts/cleanup.sh [--tf-dir DIR] [--yes] [--help]
 #
-# This is a Phase 4 (Bash & Automation) skeleton. It defines the script's
-# contract — flags, exit codes, log output, and the intended cleanup — and
-# will be fleshed out with real logic in Phase 4. See docs/roadmap.md.
+# Phase 4 behavior:
+#   1. Confirm intent (skipped with --yes)
+#   2. terraform destroy in terraform/ (if a tf binary and the dir exist)
+#   3. Remove runtime artifacts in data/ (api.log, api.pid — data/ is gitignored)
+#
+# Never touches the repository source tree and never removes unknown files.
 
 set -euo pipefail
 
-readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+readonly SCRIPT_NAME
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly REPO_ROOT
+
+TF_DIR="${IMAGEFLOW_TF_DIR:-$REPO_ROOT/terraform}"
+ASSUME_YES=0
 
 # ── Logging helpers ──────────────────────────────────────────────────
 info()  { printf '[INFO]  %s\n' "$*"; }
@@ -19,13 +28,14 @@ error() { printf '[ERROR] %s\n' "$*" >&2; }
 
 usage() {
     cat <<EOF
-Usage: $SCRIPT_NAME [--help]
+Usage: $SCRIPT_NAME [OPTIONS]
 
-Safely remove local ImageFlow resources: Terraform destroy, temp files,
-and log artifacts. Never touches the repository source tree.
+Safely tear down local ImageFlow resources.
 
 Options:
-  -h, --help    Show this help and exit.
+  --tf-dir DIR   Terraform workspace dir (default: \$IMAGEFLOW_TF_DIR or ./terraform)
+  -y, --yes      Skip the confirmation prompt
+  -h, --help     Show this help and exit.
 
 Exit codes:
   0   success
@@ -35,20 +45,51 @@ EOF
 }
 
 main() {
-    if [ "$#" -gt 1 ]; then
-        error "too many arguments"; usage >&2; return 2
+    local tf answer
+
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            -h|--help) usage; return 0 ;;
+            --tf-dir)
+                [ "$#" -ge 2 ] || { error "--tf-dir requires a value"; usage >&2; return 2; }
+                TF_DIR="$2"; shift 2 ;;
+            -y|--yes) ASSUME_YES=1; shift ;;
+            -*) error "unknown option: $1"; usage >&2; return 2 ;;
+            *)  error "unexpected argument: $1"; usage >&2; return 2 ;;
+        esac
+    done
+
+    # 1. Confirm
+    if [ "$ASSUME_YES" -eq 0 ]; then
+        printf 'Tear down local ImageFlow resources? [y/N] ' >&2
+        read -r answer || true
+        case "$answer" in
+            y|Y|yes) : ;;
+            *) info "aborted."; return 0 ;;
+        esac
     fi
 
-    case "${1:-}" in
-        -h|--help) usage; return 0 ;;
-        "")        : ;;                       # no args — run the stub
-        *)         error "unknown option: $1"; usage >&2; return 2 ;;
-    esac
+    # 2. Terraform destroy (only when the workspace exists AND a tf binary is present)
+    if [ -d "$TF_DIR" ] && { command -v terraform >/dev/null 2>&1 || command -v opentofu >/dev/null 2>&1; }; then
+        if command -v terraform >/dev/null 2>&1; then
+            tf=terraform
+        else
+            tf=opentofu
+        fi
+        info "terraform: destroy in $TF_DIR"
+        "$tf" -chdir="$TF_DIR" destroy -auto-approve || { error "terraform destroy failed"; return 1; }
+    else
+        info "skipping terraform destroy (no $TF_DIR or no terraform/opentofu binary)"
+    fi
 
-    info "$SCRIPT_NAME: Phase 4 skeleton — implementation lands in Phase 4."
-    info "Contract: confirm intent → terraform destroy → remove tmp/logs/artifacts."
-    # TODO(Phase 4): real cleanup logic.
-    return 0
+    # 3. Runtime artifacts (known filenames only — never rm -rf, never source tree)
+    if [ -d "$REPO_ROOT/data" ]; then
+        info "removing runtime artifacts in $REPO_ROOT/data"
+        rm -f "$REPO_ROOT/data/api.log" "$REPO_ROOT/data/api.pid"
+        rmdir "$REPO_ROOT/data" 2>/dev/null || true
+    fi
+
+    info "cleanup complete."
 }
 
 main "$@"

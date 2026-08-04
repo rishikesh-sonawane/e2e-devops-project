@@ -15,7 +15,8 @@
 
 set -euo pipefail
 
-readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+readonly SCRIPT_NAME
 
 # ── Configuration (env defaults; overridable via flags) ──────────────
 API_URL="${IMAGEFLOW_API_URL:-http://127.0.0.1:8000}"

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
+# shellcheck disable=SC2015   # A && B || C pattern used deliberately in assertions
 #
 # Behavior tests for scripts/health-check.sh (Phase 4).
 # Usage: ./scripts/tests/test_health-check.sh
@@ -27,6 +28,7 @@ failed_tests=0
 pass() { printf '[PASS] %s\n' "$*"; passed=$((passed + 1)); }
 fail() { printf '[FAIL] %s\n' "$*"; failed_tests=$((failed_tests + 1)); }
 
+# shellcheck disable=SC2329   # invoked via trap EXIT
 cleanup() {
     [ -n "$API_PID" ]  && kill "$API_PID"  2>/dev/null || true
     [ -n "$MOCK_PID" ] && kill "$MOCK_PID" 2>/dev/null || true
