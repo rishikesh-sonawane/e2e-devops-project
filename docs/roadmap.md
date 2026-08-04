@@ -166,7 +166,7 @@ Master: networking, identity, compute, storage, load balancing, scaling, securit
 Build (ImageFlow core + expansion):
 - Core: S3 (uploads, thumbs, state, logs), DynamoDB + Streams, Lambda (real Docker), SNS, IAM
 
-> Core ✅ — full pipeline live end-to-end AND Terraform-provisioned (`9b745dc`): upload/get/list (`9e941dd`) + image-backed Lambda (`2065ff1`, Pillow thumbnail + metadata → PROCESSED + SNS image.processed) with **automatic S3-event delivery** (PROCESSED in ~5s). Terraform modules + environments/dev provision S3/DynamoDB/SNS/IAM/ECR/Lambda with Floci S3 remote state + DynamoDB locking; plan idempotent. Remaining: IAM/security hardening details, monitoring, orchestration (Phases 11+).
+> Core ✅ — full pipeline live end-to-end AND Terraform-provisioned (`9b745dc`): upload/get/list (`9e941dd`) + image-backed Lambda (`2065ff1`, Pillow thumbnail + metadata → PROCESSED + SNS image.processed) with **automatic S3-event delivery** (PROCESSED in ~5s). Terraform modules + environments/dev provision S3/DynamoDB/SNS/IAM/ECR/Lambda with Floci S3 remote state + DynamoDB locking; plan idempotent. **Phase 11 ✅ (`51661a5`)** — API also deployed to Floci EKS (real k3s) via helm/imageflow (Deployment/Service/ConfigMap/Secret/HPA); cluster→Floci connectivity + auto-processing verified. Remaining: inner-loop CI/CD, monitoring, security hardening, troubleshooting lab (Phases 12–17).
 - Expansion (Floci real Docker): EC2 — real Linux containers with SSH, UserData, IMDS; ELB v2 — ALB/NLB with target groups; RDS — real PostgreSQL; ElastiCache — real Valkey/Redis; Auto Scaling — launch configs, ASGs, lifecycle hooks
 
 Interview Topics: networking scenarios, security scenarios, scaling scenarios, HA design.

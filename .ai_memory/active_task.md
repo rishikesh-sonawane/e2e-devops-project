@@ -1,7 +1,7 @@
 # Active Task State
 
 ## Current Focus
-**Full ImageFlow pipeline is LIVE end-to-end AND Terraform-provisioned** (`9b745dc`): upload → S3 → **S3 event notification fires the image-backed Lambda automatically** (PROCESSED in ~5s, verified) → thumbnail + DynamoDB + SNS. Terraform modules + environments/dev with Floci S3 remote state + DynamoDB locking; plan idempotent; 33/33 tests stable; CI green (incl. terraform validate). **Terraform only** (no OpenTofu) per user directive. Lambda env gotcha documented: never set AWS_ENDPOINT_URL (Floci injects its own; localhost inside container ≠ host).
+**Full ImageFlow stack deployed TWO ways on Floci:** ① event-driven serverless (upload → S3 → auto Lambda → DynamoDB + SNS, Terraform-provisioned, `9b745dc`) and ② **Kubernetes (Phase 11, `51661a5`)** — helm/imageflow chart on Floci EKS (real k3s): API pod Running, /health ok, uploads flow through the cluster and get auto-processed by the Lambda; HPA live. 33/33 tests; CI green. **Next: inner-loop CI/CD (ADR-05)** — push images to ECR + CodePipeline/CodeBuild/CodeDeploy — then monitoring/security phases.
 
 ## Immediate Next Steps
 
@@ -17,8 +17,8 @@
 9. [x] Push to origin + **CI is LIVE and GREEN** (`f7bd092` — fixed shellcheck version skew caught by first real run).
 10. [x] Build the Lambda image-processor (Pillow thumbnail + metadata → PROCESSED + SNS event) — merged `2065ff1`, 33/33 tests, live-verified; Floci S3-notification wiring confirmed supported.
 11. [x] Terraform 1.15.8 installed (hashicorp tap); **Phase 9/10 IaC live** — S3, DynamoDB, SNS, IAM, ECR, image-backed Lambda + S3 trigger; remote state on Floci; auto-delivery verified.
-12. [ ] Phase 11 — Helm chart (helm/imageflow) + Floci EKS (k3s) deployment of the API.
-13. [ ] Phase 7/8 finish — push API image to ECR, CodePipeline/CodeBuild inner loop, release workflow (deploy.yml/release.yml).
+12. [x] **Phase 11 — Helm chart + Floci EKS (real k3s)** deployed (`51661a5`): pod Running, /health ok, upload via cluster → auto Lambda → PROCESSED; HPA live; known node-DNS quirk documented.
+13. [ ] Phase 7/8 finish — inner-loop CI/CD (ADR-05): CodePipeline → CodeBuild (real buildspec) → CodeDeploy; release workflow (deploy.yml/release.yml).
 14. [ ] Monitoring (CloudWatch/OpenSearch), security (IAM/KMS/Secrets), troubleshooting lab (see docs/roadmap.md).
 
 

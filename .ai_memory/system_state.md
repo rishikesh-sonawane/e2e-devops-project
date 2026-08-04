@@ -10,7 +10,7 @@
 - **CI/CD:** Dual-loop — GitHub Actions (outer) + Floci CodePipeline/CodeBuild/CodeDeploy (inner)
 - **Cost:** $0. Everything runs locally on Floci (localhost:4566, creds test/test, region us-east-1).
 - **AI Assistants:** Freebuff (primary, continuous) · OpenCode Zen `big-pickle` (occasional, between sessions) — see ADR-08.
-- **Toolchain:** Floci CLI 0.2.0 (`~/.local/bin`), AWS CLI 2.36.15, Docker 29.5.2, shellcheck, act, Pillow 12.3.0, **Terraform 1.15.8** (`brew install hashicorp/tap/terraform`). OpenTofu explicitly NOT used (Terraform only). Still missing: Helm.
+- **Toolchain:** Floci CLI 0.2.0 (`~/.local/bin`), AWS CLI 2.36.15, Docker 29.5.2, shellcheck, act, Pillow 12.3.0, Terraform 1.15.8 (hashicorp tap), **Helm 4.2.3**, kubectl 1.34.1. OpenTofu NOT used (Terraform only). **Floci EKS cluster `imageflow-test` ACTIVE** (real k3s v1.34.1+k3s1, endpoint :6500).
 - **Remote:** `origin` = github.com/rishikesh-sonawane/e2e-devops-project (public). **CI is LIVE and GREEN** — first run `a8e9603` failed (shellcheck version skew: apt 0.9.0 vs brew 0.11.0), fixed and verified green on `f7bd092` (shellcheck pinned to v0.11.0). Every push to main now runs ruff → shellcheck → pytest → docker build.
 
 ## Component Status
@@ -26,7 +26,8 @@
 - [x] **CI LIVE & GREEN on GitHub** (first real run caught shellcheck version skew — fixed + pinned, verified passing on `f7bd092`)
 - [x] ImageFlow pipeline — **upload/get/list endpoints LIVE** (`POST/GET /api/v1/images` → S3 + DynamoDB PENDING, verified against real Floci, 18 tests)
 - [x] Pipeline processing — **Lambda image-processor LIVE** (`2065ff1`): Pillow thumbnail + metadata → PROCESSED + SNS image.processed; trigger paths s3 (event) / direct (process-pending.sh); FAILED dead-letter; 33/33 tests
-- [x] **Phase 9/10 IaC LIVE** (`9b745dc`): Terraform modules + environments/dev provision S3, DynamoDB, SNS, IAM, ECR, image-backed Lambda + S3 trigger against Floci; S3 remote state + DDB locking on Floci; plan idempotent; **S3→Lambda auto-delivery verified (upload → PROCESSED in ~5s)**; replaces lazy in-app provisioning (app's ensure remains as harmless fallback)
+- [x] **Phase 9/10 IaC LIVE** (`9b745dc`): Terraform modules + environments/dev provision S3, DynamoDB, SNS, IAM, ECR, image-backed Lambda + S3 trigger against Floci; S3 remote state + DDB locking on Floci; plan idempotent; **S3→Lambda auto-delivery verified (upload → PROCESSED in ~5s)**; replaces lazy in-app provisioning
+- [x] **Phase 11 ORCHESTRATION LIVE** (`51661a5`): helm/imageflow chart (Deployment, Service, ConfigMap, Secret, HPA, optional Ingress) deployed to **Floci EKS = real k3s** (node v1.34.1+k3s1). API image in Floci ECR via `scripts/push-api.sh`. Verified: pod Running, /health ok, real upload via clustered API → S3 → **live Lambda auto-processed it** (PROCESSED + thumbnail), HPA reports cpu 14%/70%, `helm upgrade --install` idempotent. **Known Floci quirk:** k3s node needs `/etc/hosts` entry for `floci-ecr-registry` (default docker bridge has no embedded DNS) or ImagePullBackOff — documented in helm README
 - [ ] Local Docker Containerization
 - [ ] Local Kubernetes Cluster & Helm Chart Setup (Floci EKS)
 - [ ] Infrastructure as Code (Terraform for S3/DynamoDB/Lambda/SNS)
