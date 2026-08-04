@@ -1,7 +1,7 @@
 # Active Task State
 
 ## Current Focus
-**ImageFlow pipeline upload/get/list LIVE** (`9e941dd`) — `POST /api/v1/images` uploads to S3 + DynamoDB (PENDING) via Floci (live-verified with real upload + aws cli checks), GET by id with presigned URL, paginated LIST. 18/18 tests (mocked + live integration), ruff + shellcheck clean. Cloud is UP (floci 0.2.0 + AWS CLI 2.36.15 installed). **Remote exists** (github.com/rishikesh-sonawane/e2e-devops-project) — main is 1 commit ahead, push will activate real CI/PRs. **Next: Lambda image-processor** (Pillow thumbnail → PROCESSED + SNS) — the 'process' step of the pipeline.
+**Full ImageFlow pipeline is LIVE end-to-end**: upload (`9e941dd`) → **process** (`2065ff1`, Lambda image-processor: Pillow thumbnail + metadata → PROCESSED + SNS image.processed, direct-mode via `scripts/process-pending.sh`) → retrieve (original_url + thumbnail_url presigned). 33/33 tests, ruff + shellcheck clean, CI green on GitHub. **Floci S3 event-notification config verified supported** — the primary `s3` trigger can be wired once the function is registered (Phase 10 infra). **Next: Terraform IaC (Phase 9/10)** — provision S3/DynamoDB/Lambda/SNS/IAM via terraform/, register the image-backed Lambda + S3 trigger, replace lazy in-app provisioning.
 
 ## Immediate Next Steps
 1. [x] Scaffold the repository structure and a production-ready `.gitignore`.
@@ -13,8 +13,8 @@
 7. [x] Phase 4 — Bash & Automation: all four scripts implemented + 26 tests + shellcheck (merged `434a333`).
 8. [x] Build the ImageFlow pipeline endpoints — upload/get/list live against Floci (`9e941dd`).
 9. [x] Push to origin + **CI is LIVE and GREEN** (`f7bd092` — fixed shellcheck version skew caught by first real run).
-10. [ ] Build the Lambda image-processor (Pillow thumbnail + metadata → PROCESSED + SNS event) — `IMAGE_PROCESSING_TRIGGER=s3`.
-11. [ ] Install Terraform/OpenTofu + Helm; Phase 9 Terraform IaC (replace lazy provisioning).
+10. [x] Build the Lambda image-processor (Pillow thumbnail + metadata → PROCESSED + SNS event) — merged `2065ff1`, 33/33 tests, live-verified; Floci S3-notification wiring confirmed supported.
+11. [ ] Install Terraform/OpenTofu; Phase 9/10 Terraform IaC — S3, DynamoDB, Lambda (image-backed + S3 trigger), SNS, IAM; replace lazy in-app provisioning.
 12. [ ] Phase 11+ — Helm, EKS, monitoring, etc. (see docs/roadmap.md).
 
 

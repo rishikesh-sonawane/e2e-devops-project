@@ -127,6 +127,5 @@ A phase is complete **only when you can confidently explain, implement, troubles
 - ✅ **Phase 4 (Bash & Automation)** — all four operational scripts implemented + tested (26 tests), `scripts/lint.sh` shellcheck-clean.
 - ✅ **Phase 7 kickoff / Phase 8 kickoff (CI-ready foundation)** — multi-stage non-root Dockerfile (build + smoke verified) and `.github/workflows/ci.yml` (ruff → pytest → shellcheck → docker build), validated locally with `act`.
 - ✅ **CI LIVE & GREEN on GitHub** — real runs on every push (`ruff → shellcheck → pytest → docker build`). The first real run caught a shellcheck version skew (apt 0.9.0 vs brew 0.11.0) — fixed by pinning shellcheck v0.11.0 and verified passing. Badge above is live.
-- 🔄 **ImageFlow pipeline — upload/get/list LIVE** — `POST /api/v1/images` → S3 + DynamoDB (PENDING) against Floci, GET with presigned URLs, paginated LIST. Processing (Lambda thumbnail + SNS) next.
-- 🔄 **Lambda image-processor next** — Pillow thumbnail + metadata → `PROCESSED` + SNS `image.processed` (the "process" step of the pipeline).
+- ✅ **ImageFlow pipeline COMPLETE end-to-end** — upload (`POST /api/v1/images` → S3 + DynamoDB PENDING) · **process** (`lambda/image-processor`: Pillow thumbnail + metadata → `PROCESSED` + SNS `image.processed`, run via `scripts/process-pending.sh`) · retrieve (GET returns original + thumbnail presigned URLs). 33/33 tests, live-verified against Floci (`2065ff1`).
 - See `.ai_memory/system_state.md` and `.ai_memory/active_task.md` for live status.

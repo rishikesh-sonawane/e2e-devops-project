@@ -10,7 +10,7 @@
 - **CI/CD:** Dual-loop — GitHub Actions (outer) + Floci CodePipeline/CodeBuild/CodeDeploy (inner)
 - **Cost:** $0. Everything runs locally on Floci (localhost:4566, creds test/test, region us-east-1).
 - **AI Assistants:** Freebuff (primary, continuous) · OpenCode Zen `big-pickle` (occasional, between sessions) — see ADR-08.
-- **Toolchain:** Floci CLI 0.2.0 (installed to `~/.local/bin` — no-sudo), AWS CLI 2.36.15, Docker 29.5.2 running, shellcheck, act. Still missing: Terraform/OpenTofu, Helm.
+- **Toolchain:** Floci CLI 0.2.0 (installed to `~/.local/bin` — no-sudo), AWS CLI 2.36.15, Docker 29.5.2 running, shellcheck, act, Pillow 12.3.0 (venv). Still missing: Terraform/OpenTofu, Helm.
 - **Remote:** `origin` = github.com/rishikesh-sonawane/e2e-devops-project (public). **CI is LIVE and GREEN** — first run `a8e9603` failed (shellcheck version skew: apt 0.9.0 vs brew 0.11.0), fixed and verified green on `f7bd092` (shellcheck pinned to v0.11.0). Every push to main now runs ruff → shellcheck → pytest → docker build.
 
 ## Component Status
@@ -25,7 +25,7 @@
 - [x] Phase 8 kickoff — .github/workflows/ci.yml (ruff → pytest → shellcheck → docker build) written + validated locally (act)
 - [x] **CI LIVE & GREEN on GitHub** (first real run caught shellcheck version skew — fixed + pinned, verified passing on `f7bd092`)
 - [x] ImageFlow pipeline — **upload/get/list endpoints LIVE** (`POST/GET /api/v1/images` → S3 + DynamoDB PENDING, verified against real Floci, 18 tests)
-- [ ] Pipeline processing — Lambda image-processor (Pillow thumbnail + metadata → PROCESSED + SNS image.processed)
+- [x] Pipeline processing — **Lambda image-processor LIVE** (`2065ff1`): Pillow thumbnail + metadata → PROCESSED + SNS image.processed; trigger paths s3 (event) / direct (process-pending.sh); FAILED dead-letter; 33/33 tests; Floci S3-notification wiring verified supported
 - [ ] Terraform IaC (Phase 9) — replace lazy in-app provisioning
 - [ ] Local Docker Containerization
 - [ ] Local Kubernetes Cluster & Helm Chart Setup (Floci EKS)
