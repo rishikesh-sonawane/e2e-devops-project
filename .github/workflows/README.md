@@ -1,7 +1,6 @@
-# .github/workflows — Outer-loop CI/CD (GitHub Actions)
+# .github/workflows/ — CI/CD (outer loop)
 
-- `ci.yml` — lint, SAST, tests, build, push to Floci ECR, Terraform plan
-- `deploy.yml` — deployment pipeline
-- `release.yml` — release pipeline
-
-Built out in Phase 8 (CI/CD). See docs/architecture.md §7.1.
+| Workflow | Purpose | Status |
+|---|---|---|
+| `ci.yml` | Quality gate: ruff lint → shellcheck → pytest unit tests → Docker image build | ✅ written, validated locally with `act`; goes live when the repo gains a GitHub remote |
+| `deploy.yml` / `release.yml` | Planned (Phase 8) | ⬜ |
