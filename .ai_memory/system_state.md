@@ -16,6 +16,7 @@
 - [x] AI collaboration setup documented (Freebuff primary + OpenCode Zen occasional, ADR-08)
 - [x] Directory Skeleton + .gitignore Created
 - [x] Phase 1 — Application Foundation (FastAPI: /health /version /metrics /config + config module + unit tests)
+- [x] Phase 2 — Source Control (GitHub Flow, Conventional Commits, PR + squash merge, semver tags — `docs/source-control.md`)
 - [ ] Application Code — ImageFlow pipeline (boto3: S3/DynamoDB/Lambda/SNS upload → process → retrieve)
 - [ ] Local Docker Containerization
 - [ ] Local Kubernetes Cluster & Helm Chart Setup (Floci EKS)

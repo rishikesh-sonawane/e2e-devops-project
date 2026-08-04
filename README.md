@@ -96,6 +96,7 @@ curl -X POST -F "file=@photo.jpg" http://localhost:8000/api/v1/images
 | [docs/setup.md](docs/setup.md) | Full free-tooling setup: Floci, AWS CLI, Terraform, Docker, kubectl, Helm, Freebuff + optional OpenCode Zen |
 | [docs/architecture.md](docs/architecture.md) | Detailed architecture: ImageFlow, Floci deep-dive, CI/CD, IaC, security, observability |
 | [docs/roadmap.md](docs/roadmap.md) | The 19-phase learning roadmap |
+| [docs/source-control.md](docs/source-control.md) | Phase 2: branching strategy, commit conventions, PR workflow, release tagging |
 | [AGENTS.md](AGENTS.md) | AI agent operating rules + memory sync protocol |
 | `.ai_memory/` | Long-term project memory (state, tasks, ADRs) |
 
@@ -119,5 +120,6 @@ A phase is complete **only when you can confidently explain, implement, troubles
 ## Current Status
 
 - ✅ **Phase 0 (Planning & Architecture)** — this documentation set is the deliverable.
-- ⬜ Phase 1 begins with the ImageFlow API foundation.
+- ✅ **Phase 1 (Application Foundation)** — FastAPI ops endpoints live, tested (5/5), committed (`1706b26`).
+- 🔄 **Phase 2 (Source Control)** — workflow documented in `docs/source-control.md`; being adopted (feature branches + PRs).
 - See `.ai_memory/system_state.md` and `.ai_memory/active_task.md` for live status.

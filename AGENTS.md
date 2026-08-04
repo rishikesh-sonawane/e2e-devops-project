@@ -61,6 +61,9 @@ Zero hardcoded secrets, minimal IAM role access vectors, non-root containers, le
 - Never pass `--author`, `-c user.name=`, `-c user.email=`, or set `GIT_AUTHOR_*` / `GIT_COMMITTER_*` on any commit.
 - If a machine lacks the local identity, restore it from the values above (or ask the user) — never invent an identity.
 
+### 3.7 Source Control Workflow
+Follow `docs/source-control.md` for all Git activity: **GitHub Flow** (sacred `main` + short-lived `feature/<phase>-<slug>` branches), **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, …), PRs with passing checks merged via **squash**, and immutable **semver tags** (`vX.Y.Z`). Never commit directly to `main`; never force-push or rewrite pushed history; on conflicts, resolve all markers before `--continue`.
+
 ## 4. Tech Stack Matrix (Single Source of Truth)
 
 | Layer | Choice |

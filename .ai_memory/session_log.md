@@ -30,4 +30,6 @@
 
 - Created `Rishi's Understanding.md` — a plain-language teaching guide (written for a reader from any field) explaining the project vision, the end goal, the ImageFlow app, all tools, the 19-phase plan, and everything built so far. It is a **personal note, deliberately gitignored** (not versioned) — see `.gitignore`.
 
+- Phase 2 kickoff: wrote `docs/source-control.md` — the Git workflow contract (GitHub Flow: sacred `main` + short-lived `feature/<phase>-<slug>`; Conventional Commits with type table; PR workflow + squash merge + Definition of Done; semver release tags; everyday command cheat sheet; common-scenario playbook). Cross-linked from README (docs table + current status), roadmap Phase 2, AGENTS.md §3.7; `.ai_memory` synced. Next: practice the workflow on the next phase's real work.
+
 <!-- Future sessions: append new entries below, never edit above. -->
