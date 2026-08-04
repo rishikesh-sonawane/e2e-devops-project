@@ -19,7 +19,7 @@ failed_tests=0
 pass() { printf '[PASS] %s\n' "$*"; passed=$((passed + 1)); }
 fail() { printf '[FAIL] %s\n' "$*"; failed_tests=$((failed_tests + 1)); }
 
-# shellcheck disable=SC2329   # invoked via trap EXIT
+# shellcheck disable=SC2317,SC2329   # invoked via trap EXIT (code differs by shellcheck version)
 cleanup() {
     rm -rf "$TEST_OUT" 2>/dev/null || true
 }

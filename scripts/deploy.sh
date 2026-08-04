@@ -102,7 +102,9 @@ step_api() {
         sleep 1
     done
     error "api: did not become healthy within 10s — see data/api.log"
-    [ -f "$REPO_ROOT/data/api.pid" ] && kill "$(cat "$REPO_ROOT/data/api.pid")" 2>/dev/null || true
+    if [ -f "$REPO_ROOT/data/api.pid" ]; then
+        kill "$(cat "$REPO_ROOT/data/api.pid")" 2>/dev/null || true
+    fi
     return 1
 }
 
