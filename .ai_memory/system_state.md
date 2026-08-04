@@ -17,6 +17,9 @@
 - [x] Directory Skeleton + .gitignore Created
 - [x] Phase 1 — Application Foundation (FastAPI: /health /version /metrics /config + config module + unit tests)
 - [x] Phase 2 — Source Control (GitHub Flow, Conventional Commits, PR + squash merge, semver tags — `docs/source-control.md`)
+- [x] Phase 2 practiced end-to-end: `feature/p4-bash-scripts` → 6 conventional commits → squash merge → branch deleted
+- [x] Phase 4 kickoff — scripts/ skeleton (deploy, health-check, cleanup, backup: executable contract stubs with `--help`)
+- [ ] Phase 4 — Bash & Automation (real script logic, tests, shellcheck)
 - [ ] Application Code — ImageFlow pipeline (boto3: S3/DynamoDB/Lambda/SNS upload → process → retrieve)
 - [ ] Local Docker Containerization
 - [ ] Local Kubernetes Cluster & Helm Chart Setup (Floci EKS)

@@ -92,6 +92,8 @@ Build (`scripts/`):
 - `cleanup.sh` — resource cleanup
 - `backup.sh` — backup script
 
+> Skeleton landed ✅ (executable, `set -euo pipefail`, `--help`, exit codes 0/1/2) via `feature/p4-bash-scripts` (squash-merged `1d5c3d5`) — real logic, tests, and shellcheck next.
+
 Interview Topics: exit codes, process substitution, command substitution, shell expansion.
 
 ---

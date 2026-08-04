@@ -34,4 +34,6 @@
 
 - Review pass on Phase 2: fixed force-push contradiction (§2 now allows rebase + `--force-with-lease` on own pre-merge feature branch only), clarified the remote gap (PR flow activates in Phase 8 — until then local feature-branch discipline, which also explains early direct-to-main commits), softened the crash-recovery §8 claim, fixed the squash-message parenthetical, aligned AGENTS.md §3.7 wording.
 
+- Practiced Phase 2 end-to-end: branch `feature/p4-bash-scripts` from main → wrote 4 executable script skeletons (deploy/health-check/cleanup/backup) + scripts/README.md → 5 conventional commits → reviewer nit (extra args silently ignored) → `fix(scripts): reject unexpected extra arguments` → re-validated (bash -n, exit 2 on bad flags) → **squash-merged** to main as `1d5c3d5` → feature branch deleted. Main history stays linear; all commits authored by Rishikesh. Phase 4 scripts skeleton now live.
+
 <!-- Future sessions: append new entries below, never edit above. -->
