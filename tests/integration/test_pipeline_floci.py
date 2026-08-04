@@ -48,6 +48,19 @@ def test_live_upload_get_list(floci_up) -> None:
     assert fetched.status_code == 200
     assert fetched.json()["original_url"].startswith("http")
 
-    listing = client.get("/api/v1/images")
-    assert listing.status_code == 200
-    assert any(item["image_id"] == image_id for item in listing.json()["items"])
+    # The table may contain pre-existing records (dev demos), so page through
+    # the listing until the new image is found (or the pages run out).
+    found = False
+    cursor = None
+    for _ in range(10):
+        params = {"cursor": cursor} if cursor else {}
+        listing = client.get("/api/v1/images", params=params)
+        assert listing.status_code == 200
+        page = listing.json()
+        if any(item["image_id"] == image_id for item in page["items"]):
+            found = True
+            break
+        cursor = page.get("next")
+        if not cursor:
+            break
+    assert found, "uploaded image not found in paginated listing"
