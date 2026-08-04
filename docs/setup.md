@@ -151,8 +151,9 @@ floci-data/
 
 ## 5. AI Memory Bank
 
-This repo includes a persistent memory system (see `AGENTS.md`):
+This repo includes a persistent memory system (see `AGENTS.md`). **The full how-to lives in [`.ai_memory/README.md`](../.ai_memory/README.md)** — start there:
 
+- `.ai_memory/README.md` — how-to guide (load → sync → commit → recover)
 - `.ai_memory/SYSTEM_CONTEXT.md` — structural anchor
 - `.ai_memory/system_state.md` — what's built
 - `.ai_memory/active_task.md` — what's next

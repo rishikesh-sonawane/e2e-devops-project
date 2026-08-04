@@ -20,4 +20,6 @@
 
 - Baseline committed: `2cd1d0f` (root commit, main, 10 files / 1475 insertions). Gap closed — `git log`/`git diff` now serve as the second source of truth for crash recovery. Working tree clean.
 
+- Added `.ai_memory/README.md` — user guide for the memory workflow (load → sync per step → commit → crash recovery → verify test). Cross-linked from AGENTS.md §3.1, docs/setup.md §5, SYSTEM_CONTEXT.md.
+
 <!-- Future sessions: append new entries below, never edit above. -->

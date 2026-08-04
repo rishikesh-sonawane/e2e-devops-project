@@ -20,6 +20,7 @@ Read the files inside `.ai_memory/` at the **start of every message** to maintai
 
 | File | Purpose |
 |---|---|
+| `.ai_memory/README.md` | User guide — how to use this memory bank |
 | `.ai_memory/SYSTEM_CONTEXT.md` | Structural anchor for the whole repo |
 | `.ai_memory/system_state.md` | What has been built |
 | `.ai_memory/active_task.md` | What is being worked on right now |

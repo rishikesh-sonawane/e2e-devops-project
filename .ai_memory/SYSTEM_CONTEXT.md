@@ -36,7 +36,7 @@ You are a Principal Cloud Infrastructure Engineer and DevSecOps Architect acting
 ## 5. Directory Mapping Blueprint
 ```text
 .
-├── .ai_memory/             # AI Session Continuity Engine (SYSTEM_CONTEXT · state · tasks · session_log · ADRs)
+├── .ai_memory/             # AI Session Continuity Engine (README guide · SYSTEM_CONTEXT · state · tasks · session_log · ADRs)
 ├── .github/workflows/      # Outer Loop Automation (GitHub Actions Pipeline)
 ├── app/                    # ImageFlow API (FastAPI)
 │   ├── tests/              # Unit tests
