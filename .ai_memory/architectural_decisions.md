@@ -41,7 +41,7 @@
 - **Decision:** Support `IMAGE_PROCESSING_TRIGGER=s3|dynamodb|direct` — primary path is S3 event notification → Lambda; fallbacks are DynamoDB Streams → Lambda event source mapping, or direct boto3 invoke from the API.
 - **Context:** Floci documents S3 event notifications and DynamoDB Streams → Lambda event source mapping, but wiring behavior can vary by version; a configurable path guarantees the pipeline always works locally.
 - **Consequences:** Slightly more configuration surface; robust, honest engineering that survives Floci version changes.
-- **Verified (2026-08-04, Floci 0.2.0 / server v1.5.34):** `s3api put/get-bucket-notification-configuration` stores `LambdaFunctionConfigurations` for `s3:ObjectCreated:*` — the primary S3-trigger path is wireable once the image-backed function is registered (Phase 10). `direct` mode ships today via `scripts/process-pending.sh`.
+- **Verified (2026-08-04, Floci 0.2.0 / server v1.5.34):** S3→Lambda delivery **fires automatically** (upload → PROCESSED in ~5s). Image-backed Lambda works (ECR on :5100; boto3 needs `Code={ImageUri=...}`). **CRITICAL gotcha: never set `AWS_ENDPOINT_URL` in the Lambda's env** — inside the container `localhost` is the container, not the host; Floci injects its own reachable endpoint, and overriding it breaks in-container connectivity. `direct` mode (`scripts/process-pending.sh`) remains the fallback.
 
 ## ADR 08: Freebuff as Primary Assistant — OpenCode Zen "Big Pickle" Occasional
 - **Status:** Accepted

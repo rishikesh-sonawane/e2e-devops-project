@@ -1,7 +1,9 @@
 # Active Task State
 
 ## Current Focus
-**Full ImageFlow pipeline is LIVE end-to-end**: upload (`9e941dd`) → **process** (`2065ff1`, Lambda image-processor: Pillow thumbnail + metadata → PROCESSED + SNS image.processed, direct-mode via `scripts/process-pending.sh`) → retrieve (original_url + thumbnail_url presigned). 33/33 tests, ruff + shellcheck clean, CI green on GitHub. **Floci S3 event-notification config verified supported** — the primary `s3` trigger can be wired once the function is registered (Phase 10 infra). **Next: Terraform IaC (Phase 9/10)** — provision S3/DynamoDB/Lambda/SNS/IAM via terraform/, register the image-backed Lambda + S3 trigger, replace lazy in-app provisioning.
+**Full ImageFlow pipeline is LIVE end-to-end AND Terraform-provisioned** (`9b745dc`): upload → S3 → **S3 event notification fires the image-backed Lambda automatically** (PROCESSED in ~5s, verified) → thumbnail + DynamoDB + SNS. Terraform modules + environments/dev with Floci S3 remote state + DynamoDB locking; plan idempotent; 33/33 tests stable; CI green (incl. terraform validate). **Terraform only** (no OpenTofu) per user directive. Lambda env gotcha documented: never set AWS_ENDPOINT_URL (Floci injects its own; localhost inside container ≠ host).
+
+## Immediate Next Steps
 
 ## Immediate Next Steps
 1. [x] Scaffold the repository structure and a production-ready `.gitignore`.
@@ -14,8 +16,10 @@
 8. [x] Build the ImageFlow pipeline endpoints — upload/get/list live against Floci (`9e941dd`).
 9. [x] Push to origin + **CI is LIVE and GREEN** (`f7bd092` — fixed shellcheck version skew caught by first real run).
 10. [x] Build the Lambda image-processor (Pillow thumbnail + metadata → PROCESSED + SNS event) — merged `2065ff1`, 33/33 tests, live-verified; Floci S3-notification wiring confirmed supported.
-11. [ ] Install Terraform/OpenTofu; Phase 9/10 Terraform IaC — S3, DynamoDB, Lambda (image-backed + S3 trigger), SNS, IAM; replace lazy in-app provisioning.
-12. [ ] Phase 11+ — Helm, EKS, monitoring, etc. (see docs/roadmap.md).
+11. [x] Terraform 1.15.8 installed (hashicorp tap); **Phase 9/10 IaC live** — S3, DynamoDB, SNS, IAM, ECR, image-backed Lambda + S3 trigger; remote state on Floci; auto-delivery verified.
+12. [ ] Phase 11 — Helm chart (helm/imageflow) + Floci EKS (k3s) deployment of the API.
+13. [ ] Phase 7/8 finish — push API image to ECR, CodePipeline/CodeBuild inner loop, release workflow (deploy.yml/release.yml).
+14. [ ] Monitoring (CloudWatch/OpenSearch), security (IAM/KMS/Secrets), troubleshooting lab (see docs/roadmap.md).
 
 
 ## Blockers / Risks

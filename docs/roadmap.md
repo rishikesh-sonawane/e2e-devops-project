@@ -166,7 +166,7 @@ Master: networking, identity, compute, storage, load balancing, scaling, securit
 Build (ImageFlow core + expansion):
 - Core: S3 (uploads, thumbs, state, logs), DynamoDB + Streams, Lambda (real Docker), SNS, IAM
 
-> Core ✅ — full pipeline live end-to-end: upload/get/list (`9e941dd`) + **Lambda image-processor** (`2065ff1`: Pillow thumbnail + metadata → PROCESSED + SNS image.processed; S3-event + direct triggers; FAILED dead-letter; 33/33 tests). Floci S3-notification wiring verified supported. Remaining: IAM roles + Terraform provisioning.
+> Core ✅ — full pipeline live end-to-end AND Terraform-provisioned (`9b745dc`): upload/get/list (`9e941dd`) + image-backed Lambda (`2065ff1`, Pillow thumbnail + metadata → PROCESSED + SNS image.processed) with **automatic S3-event delivery** (PROCESSED in ~5s). Terraform modules + environments/dev provision S3/DynamoDB/SNS/IAM/ECR/Lambda with Floci S3 remote state + DynamoDB locking; plan idempotent. Remaining: IAM/security hardening details, monitoring, orchestration (Phases 11+).
 - Expansion (Floci real Docker): EC2 — real Linux containers with SSH, UserData, IMDS; ELB v2 — ALB/NLB with target groups; RDS — real PostgreSQL; ElastiCache — real Valkey/Redis; Auto Scaling — launch configs, ASGs, lifecycle hooks
 
 Interview Topics: networking scenarios, security scenarios, scaling scenarios, HA design.
