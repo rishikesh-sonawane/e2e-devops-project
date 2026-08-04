@@ -10,6 +10,8 @@
 - **CI/CD:** Dual-loop — GitHub Actions (outer) + Floci CodePipeline/CodeBuild/CodeDeploy (inner)
 - **Cost:** $0. Everything runs locally on Floci (localhost:4566, creds test/test, region us-east-1).
 - **AI Assistants:** Freebuff (primary, continuous) · OpenCode Zen `big-pickle` (occasional, between sessions) — see ADR-08.
+- **Toolchain:** Floci CLI 0.2.0 (installed to `~/.local/bin` — no-sudo), AWS CLI 2.36.15, Docker 29.5.2 running, shellcheck, act. Still missing: Terraform/OpenTofu, Helm.
+- **Remote:** `origin` = github.com/rishikesh-sonawane/e2e-devops-project — CI goes live on push.
 
 ## Component Status
 - [x] Phase 0 — Planning & Architecture (docs aligned to a single vision: README, docs/, AGENTS.md, .ai_memory/)
@@ -21,7 +23,9 @@
 - [x] Phase 4 — Bash & Automation **COMPLETE** (all four scripts implemented + tested, shellcheck clean): health-check.sh (API/Floci checks), deploy.sh (terraform apply → API start → smoke), cleanup.sh (confirmed destroy + artifact removal), backup.sh (verified timestamped tar) — 26 behavior tests pass, `scripts/lint.sh` shellcheck-clean
 - [x] Phase 7 kickoff — Dockerfile (multi-stage, non-root, HEALTHCHECK) + .dockerignore; build + container smoke verified
 - [x] Phase 8 kickoff — .github/workflows/ci.yml (ruff → pytest → shellcheck → docker build) written + validated locally (act); goes live when a GitHub remote exists
-- [ ] Application Code — ImageFlow pipeline (boto3: S3/DynamoDB/Lambda/SNS upload → process → retrieve)
+- [x] ImageFlow pipeline — **upload/get/list endpoints LIVE** (`POST/GET /api/v1/images` → S3 + DynamoDB PENDING, verified against real Floci, 18 tests)
+- [ ] Pipeline processing — Lambda image-processor (Pillow thumbnail + metadata → PROCESSED + SNS image.processed)
+- [ ] Terraform IaC (Phase 9) — replace lazy in-app provisioning
 - [ ] Local Docker Containerization
 - [ ] Local Kubernetes Cluster & Helm Chart Setup (Floci EKS)
 - [ ] Infrastructure as Code (Terraform for S3/DynamoDB/Lambda/SNS)
