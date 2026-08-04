@@ -127,6 +127,8 @@ Build:
 
 Interview Topics: containers vs VMs, ENTRYPOINT vs CMD, copy-on-write, image layers.
 
+> Kickoff ✅ — `Dockerfile` (multi-stage, non-root `imageflow`, HEALTHCHECK) + `.dockerignore` built & smoke-verified; `docker build -t imageflow-api:ci .` passes.
+
 ---
 
 ## Phase 8 — CI/CD
@@ -138,6 +140,8 @@ Build (dual-loop):
 - **Inner loop (Floci):** CodePipeline orchestration, CodeBuild real `buildspec` execution, CodeDeploy deployment groups
 
 Interview Topics: blue/green, canary, rolling deployments, feature flags, pipeline optimization.
+
+> Kickoff ✅ — `.github/workflows/ci.yml` (quality=ruff+shellcheck+toml → test=pytest → build=Docker image) written and validated locally with `act` (reviewer-found GHA-cache permissions bug fixed). Goes live when the repo gains a GitHub remote. Inner loop (Floci CodePipeline/CodeBuild/CodeDeploy) comes later in this phase.
 
 ---
 

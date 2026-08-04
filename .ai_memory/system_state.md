@@ -15,10 +15,12 @@
 - [x] Phase 0 — Planning & Architecture (docs aligned to a single vision: README, docs/, AGENTS.md, .ai_memory/)
 - [x] AI collaboration setup documented (Freebuff primary + OpenCode Zen occasional, ADR-08)
 - [x] Directory Skeleton + .gitignore Created
-- [x] Phase 1 — Application Foundation (FastAPI: /health /version /metrics /config + config module + unit tests)
+- [x] Phase 1 — Application Foundation (FastAPI: /health /version /metrics /config + config module + unit tests, pytest 10/10)
 - [x] Phase 2 — Source Control (GitHub Flow, Conventional Commits, PR + squash merge, semver tags — `docs/source-control.md`)
 - [x] Phase 2 practiced end-to-end: `feature/p4-bash-scripts` → 6 conventional commits → squash merge → branch deleted
 - [x] Phase 4 — Bash & Automation **COMPLETE** (all four scripts implemented + tested, shellcheck clean): health-check.sh (API/Floci checks), deploy.sh (terraform apply → API start → smoke), cleanup.sh (confirmed destroy + artifact removal), backup.sh (verified timestamped tar) — 26 behavior tests pass, `scripts/lint.sh` shellcheck-clean
+- [x] Phase 7 kickoff — Dockerfile (multi-stage, non-root, HEALTHCHECK) + .dockerignore; build + container smoke verified
+- [x] Phase 8 kickoff — .github/workflows/ci.yml (ruff → pytest → shellcheck → docker build) written + validated locally (act); goes live when a GitHub remote exists
 - [ ] Application Code — ImageFlow pipeline (boto3: S3/DynamoDB/Lambda/SNS upload → process → retrieve)
 - [ ] Local Docker Containerization
 - [ ] Local Kubernetes Cluster & Helm Chart Setup (Floci EKS)

@@ -123,4 +123,5 @@ A phase is complete **only when you can confidently explain, implement, troubles
 - ✅ **Phase 1 (Application Foundation)** — FastAPI ops endpoints live, tested (5/5), committed (`1706b26`).
 - ✅ **Phase 2 (Source Control)** — workflow documented (`docs/source-control.md`) and practiced end-to-end (feature branch → conventional commits → squash merge → branch deleted). PR flow activates once a GitHub remote exists (Phase 8).
 - ✅ **Phase 4 (Bash & Automation)** — all four operational scripts implemented + tested (26 tests), `scripts/lint.sh` shellcheck-clean.
+- ✅ **Phase 7 kickoff / Phase 8 kickoff (CI-ready foundation)** — multi-stage non-root Dockerfile (build + smoke verified) and `.github/workflows/ci.yml` (ruff → pytest → shellcheck → docker build), validated locally with `act`; CI goes live when the repo gains a GitHub remote.
 - See `.ai_memory/system_state.md` and `.ai_memory/active_task.md` for live status.
