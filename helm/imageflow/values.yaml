@@ -5,6 +5,15 @@
 
 replicaCount: 1
 
+# Deployment strategy (Phase 12 — Deployment Strategies).
+# RollingUpdate with maxSurge 1 / maxUnavailable 0: bring up one new pod
+# before taking down any old pod — zero downtime, never below desired count.
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
 image:
   # Image pushed to Floci ECR (:5100 real registry) — see scripts/push-api.sh
   repository: 000000000000.dkr.ecr.us-east-1.localhost:5100/imageflow-api

@@ -1,0 +1,113 @@
+# blue-green.yaml — Blue/Green deployment demo (Phase 12)
+#
+# Two full, independent stacks — "blue" (image v2) and "green" (image v3) —
+# are deployed side by side. Only one is live at a time: the Service selector
+# points at the active color. Switching = one atomic `kubectl patch` on the
+# Service selector (no downtime, instant cutover, trivial rollback).
+#
+#   1. kubectl apply -f k8s/demo/blue-green.yaml
+#   2. curl the service     → all responses git_sha=v2 (blue live)
+#   3. flip selector to green:
+#        kubectl patch svc imageflow-bg -p '{"spec":{"selector":{"app.kubernetes.io/name":"imageflow","color":"green"}}}'
+#   4. curl the service     → all responses git_sha=v3 (green live)
+#   5. Rollback = flip the selector back to blue. Old stack stays warm.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: imageflow-blue
+  labels:
+    app.kubernetes.io/name: imageflow
+    color: blue
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: imageflow
+      color: blue
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: imageflow
+        color: blue
+    spec:
+      containers:
+        - name: imageflow
+          image: 000000000000.dkr.ecr.us-east-1.localhost:5100/imageflow-api:v2
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: GIT_SHA
+              value: "v2"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: imageflow-green
+  labels:
+    app.kubernetes.io/name: imageflow
+    color: green
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: imageflow
+      color: green
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: imageflow
+        color: green
+    spec:
+      containers:
+        - name: imageflow
+          image: 000000000000.dkr.ecr.us-east-1.localhost:5100/imageflow-api:v3
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: GIT_SHA
+              value: "v3"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: imageflow-bg
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: http
+      protocol: TCP
+      name: http
+  # Points at BLUE by default — flip to "green" for the cutover.
+  selector:
+    app.kubernetes.io/name: imageflow
+    color: blue
