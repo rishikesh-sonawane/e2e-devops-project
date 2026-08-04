@@ -1,6 +1,7 @@
 """Unit tests for the ImageFlow Phase 1 foundation endpoints."""
 from fastapi.testclient import TestClient
 
+from app.config.settings import get_settings
 from app.main import app
 
 client = TestClient(app)
@@ -36,8 +37,10 @@ def test_config_masks_secrets() -> None:
     body = resp.json()
     assert body["aws_secret_access_key"] == "***"
     assert body["aws_access_key_id"] == "***"
-    assert body["aws_endpoint_url"] == "http://localhost:4566"
-    assert body["image_processing_trigger"] == "s3"
+    # Non-secret values pass through untouched — compared against the live
+    # settings (env-aware: `eval $(floci env)` changes the endpoint URL).
+    assert body["aws_endpoint_url"] == get_settings().aws_endpoint_url
+    assert body["image_processing_trigger"] == get_settings().image_processing_trigger
 
 
 def test_root_links() -> None:

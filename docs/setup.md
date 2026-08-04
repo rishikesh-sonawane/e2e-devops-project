@@ -43,6 +43,12 @@ floci start
 eval $(floci env)          # exports AWS_ENDPOINT_URL, dummy creds, region
 ```
 
+> **No-sudo install:** the installer defaults to `/usr/local/bin` (needs sudo). To
+> install without sudo: `export FLOCI_INSTALL_DIR="$HOME/.local/bin" && curl -fsSL
+> https://floci.io/install.sh | sh` (note: the env var must be **exported**, not
+> just prefixed to `curl`), then add `$HOME/.local/bin` to `PATH` in your shell
+> profile. `floci doctor` verifies the whole setup.
+
 **Option B — Docker Compose** (matches `floci-compose.yml` in the repo):
 
 ```bash

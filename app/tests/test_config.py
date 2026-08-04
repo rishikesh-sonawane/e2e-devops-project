@@ -2,7 +2,17 @@
 import os
 from unittest.mock import patch
 
+import pytest
+
 from app.config.settings import Settings, get_settings
+
+
+@pytest.fixture(autouse=True)
+def clean_env():
+    """Hermetic env for every config test — ambient vars (e.g. `eval $(floci env)`)
+    must never leak into assertions about defaults."""
+    with patch.dict(os.environ, {}, clear=True):
+        yield
 
 
 def test_defaults_match_floci_contract() -> None:

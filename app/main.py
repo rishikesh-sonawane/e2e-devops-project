@@ -19,6 +19,7 @@ from fastapi import FastAPI, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, generate_latest
 
 from app.config.settings import get_settings
+from app.routes import images
 
 settings = get_settings()
 
@@ -70,6 +71,8 @@ app = FastAPI(
         "Runs locally on Floci for $0 (see docs/architecture.md)."
     ),
 )
+
+app.include_router(images.router)
 
 
 @app.middleware("http")
