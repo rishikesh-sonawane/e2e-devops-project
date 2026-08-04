@@ -28,4 +28,6 @@
 
 - Phase 1 built & verified: app/main.py (ops endpoints), app/config/settings.py (env-driven, secrets masked), unit tests (5 passed), ruff clean, live uvicorn smoke test OK. Pinned app/requirements.txt. Run convention standardized to repo-root venv + `uvicorn app.main:app`; docs updated (setup/README/architecture).
 
+- Created `Rishi's Understanding.md` — a plain-language teaching guide (written for a reader from any field) explaining the project vision, the end goal, the ImageFlow app, all tools, the 19-phase plan, and everything built so far. It is a **personal note, deliberately gitignored** (not versioned) — see `.gitignore`.
+
 <!-- Future sessions: append new entries below, never edit above. -->

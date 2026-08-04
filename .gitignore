@@ -74,6 +74,9 @@ Thumbs.db
 *.swo
 *~
 
+# ─── Personal notes (not part of the project) ───────────────────────
+Rishi's Understanding.md
+
 # ─── Must NOT be ignored ───────────────────────────────────────────
 # .ai_memory/            <- project memory, commit it
 # .terraform.lock.hcl    <- dependency pinning, commit it
