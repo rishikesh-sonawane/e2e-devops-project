@@ -1,0 +1,3 @@
+# image-processor Lambda dependencies (Phase 10, ADR-06)
+boto3==1.43.63
+Pillow==12.3.0

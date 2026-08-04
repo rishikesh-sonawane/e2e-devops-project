@@ -3,7 +3,7 @@
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-testpaths = ["app/tests", "tests"]
+testpaths = ["app/tests", "tests", "lambda/image-processor/tests"]
 
 [tool.ruff]
 line-length = 100

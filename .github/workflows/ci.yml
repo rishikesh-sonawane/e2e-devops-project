@@ -39,10 +39,10 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r app/requirements.txt
+        run: pip install -r app/requirements.txt -r lambda/image-processor/requirements.txt
 
       - name: Ruff lint
-        run: ruff check app/
+        run: ruff check app/ lambda/image-processor/
 
       - name: Install shellcheck (pinned to match local brew 0.11.0)
         run: |
@@ -73,7 +73,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r app/requirements.txt
+        run: pip install -r app/requirements.txt -r lambda/image-processor/requirements.txt
 
       - name: Run pytest
         run: pytest -q
