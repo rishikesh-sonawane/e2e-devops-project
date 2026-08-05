@@ -41,7 +41,7 @@ floci doctor             # all checks pass?
 
 ```bash
 source .venv/bin/activate
-pytest -q                          # expect: 52 passed (35 app + 17 lambda)
+pytest -q                          # expect: 53 passed (36 app + 17 lambda)
 ruff check app/ lambda/image-processor/      # expect: All checks passed
 bash scripts/lint.sh               # expect: shellcheck: all scripts clean
 for t in scripts/tests/test_*.sh; do echo "== $t"; bash "$t" | tail -1; done   # 7 suites, all PASSED
@@ -236,6 +236,9 @@ bash scripts/reliability.sh reconcile           # drift report (dry-run)
 bash scripts/reliability.sh reconcile --apply   # corrects drift
 
 # kill-api needs a running API + its pid file (deploy.sh writes data/api.pid):
+# NOTE: deploy.sh resolves the REAL listener pid (lsof/pgrep on the port) — a
+# backgrounded `cd && nohup uvicorn` makes `$!` the wrapper pid on macOS, which
+# broke kill-api with "API process N not running" (fixed in PR #4).
 bash scripts/reliability.sh chaos kill-api      # kill → /health fails → restart via deploy.sh → recovered
 ```
 
@@ -249,7 +252,7 @@ gh run list --branch main --limit 1 --json status,conclusion,workflowName \
   -q '.[] | "\(.workflowName): \(.status)/\(.conclusion)"'
 # watch live:
 gh run watch "$(gh run list --branch main --limit 1 --json databaseId -q '.[0].databaseId')" --exit-status
-# Expect all 4 jobs green: Lint, Unit tests (52), Security gates (pip-audit/gitleaks/trivy), Build (+ trivy image)
+# Expect all 4 jobs green: Lint, Unit tests (53), Security gates (pip-audit/gitleaks/trivy), Build (+ trivy image)
 ```
 
 ---
@@ -267,7 +270,7 @@ floci stop                                       # stop the local cloud (full re
 
 ## The 60-second "everything is verified" checklist
 
-1. `pytest -q` → **52 passed** · `bash scripts/lint.sh` clean · 58 script tests pass.
+1. `pytest -q` → **53 passed** · `bash scripts/lint.sh` clean · 59 script tests pass.
 2. `terraform apply` → **No changes** · ASG shows 1 instance.
 3. Upload a PNG → **PROCESSED in ~5s** with a thumbnail.
 4. `bash scripts/observability.sh` → metric datapoints + alarms present.

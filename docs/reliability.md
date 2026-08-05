@@ -189,5 +189,23 @@ Probe-verified on Floci 0.2.0 / server 1.5.34:
 like DynamoDB; `--query` extraction; Lambda lifecycle simulation) + a fake
 `kubectl`. Covers: syntax, help, usage errors (exit 2), backup happy + aws-down
 paths, restore with/without backups, the full drill, all three chaos targets,
-scaling, reconcile report + apply + converged. Suite total is 56 script tests,
-all green, shellcheck-clean.
+scaling, reconcile report + apply + converged. Suite total is 59 script tests
+(all suites: deploy 10, backup 5, cleanup 5, health-check 7, observability 7,
+security 8, reliability 17), all green, shellcheck-clean.
+
+> **Full-system live drill (2026-08-05, PR #4 `eb20ed1`):** every layer of
+> ImageFlow was run together in one continuous pass on Floci — the drill caught
+> and fixed four real issues: ① `chaos kill-api`'s pid came from a backgrounded
+> `cd && nohup uvicorn`, so on macOS `$!` was the wrapper pid (off-by-one) and
+> the kill failed with "not running" — `deploy.sh` now resolves the real port
+> listener (`lsof`, `pgrep` fallback), with a regression test asserting
+> pidfile == listener; ② the fail-image demo uploaded corrupt bytes BEFORE the
+> DynamoDB record, so the S3 event could fire while the record didn't exist →
+> Lambda skipped it → record stuck PENDING forever — now record-first
+> (deterministic, 2/2 live); ③ the API route had the same latent race
+> (`upload_original` before `create_record`) — reversed via the shared
+> deterministic `storage.original_key()`, **plus rollback**: a failed upload
+> deletes its record, so no zombie PENDING items survive; ④ Terraform showed
+> perpetual in-place diffs for Floci normalization quirks (alarm
+> `datapoints_to_alarm`, Cognito pool defaults, IAM user tags) — documented
+> `ignore_changes` make the plan idempotent ("No changes").
