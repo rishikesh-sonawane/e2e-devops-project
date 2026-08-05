@@ -59,6 +59,8 @@
 
 <!-- Future sessions: append new entries below, never edit above. -->
 
+- **User decision:** Phase 5 (Python for DevOps) is **deferred** — "skip for now, pick it up later." Draft plan (tools/ package: imageflow-cli API client, backup-audit, config-lint + docs/python-devops.md) recorded in active_task for later. **Phase 16 — GitOps remains the next phase.**
+
 ### 2026-08-05 — Phase 15 SHIPPED
 - **Phase 15 COMMITTED + PUSHED + PR #2 + SQUASH-MERGED** (`76d9a0f` on branch → `17a2523` on main, `gh pr merge --squash --delete-branch`; feature branch deleted local + remote). Single conventional commit `feat(reliability)` including all Phase 15 work + ADR-13 + memory sync. **CI green on the PR (all 4 jobs — Lint, Unit tests, Security gates, Docker build — first run, no fixes needed this time) and green on main post-merge** (run 30995178587 success).
 - **All docs updated:** README (Phase 15 bullet + docs table), docs/roadmap.md (Phase 15 ✅), docs/architecture.md (§3.9 + service-map), scripts/README.md (reliability.sh row), docs/reliability.md (RTO/RPO, chaos table, runbook, honest AZ finding), and the gitignored **`Rishi's Understanding.md`** (header, phase table 13–15 ✅, new §5.11–5.15 monitoring/security/reliability/ops/history, §6 next steps → Phase 16 GitOps, glossary additions).

@@ -19,6 +19,8 @@
 13. [x] Phase 15 — Reliability COMPLETE **AND MERGED** (`17a2523` on main, PR #2, squash, branch deleted): reliability.sh (backup/restore/drill RTO, chaos kill-pod/kill-instance/kill-api/fail-image, scaling, reconcile [--apply]) + 17 behavior tests + modules/autoscaling (launch template + ASG with AZs) + docs/reliability.md + ADR-13. All live-verified on Floci; CI green on PR + main.
 14. [ ] Phase 16 — GitOps (Flux/ArgoCD-style declarative sync on k3s), then troubleshooting lab & interview prep.
 
+> **Note (deferred phases):** Phase 3 (Linux Fundamentals) and Phase 5 (Python for DevOps) are intentionally **deferred by user decision** (Aug 2026) — to be picked up later, likely folded into a fundamentals cleanup after Phase 16. Phase 5 plan (API-client CLI, backup-audit tool, YAML config-lint, docs/python-devops.md) was drafted but not started. GitOps (Phase 16) is the confirmed next phase.
+
 ## Blockers / Risks
 - Context loss mid-session — mitigated by continuous sync + `.ai_memory/session_log.md` (ADR-09); this session exercised recovery twice (Phase 14 on-disk-but-unrecorded; Phase 15 written as it went).
 - Floci must be started before any boto3 call (run `floci start` and `eval $(floci env)`).
