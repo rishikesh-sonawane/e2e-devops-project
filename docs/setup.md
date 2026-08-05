@@ -2,6 +2,8 @@
 
 Everything in this project is **100% free**. This guide installs the exact toolchain needed and wires up the AI assistant stack — **Freebuff as the primary (only continuous) assistant**, with **OpenCode + Zen "Big Pickle"** available occasionally between sessions. The goal: a complete DevOps workstation with $0 spent.
 
+> **Once the toolchain is installed**, the developer's guide ([DEVELOPER.md](DEVELOPER.md)) explains the repo map, the daily dev loop, how to run every test suite, and the contribution checklist.
+
 ---
 
 ## 1. Core Tools (All Free)

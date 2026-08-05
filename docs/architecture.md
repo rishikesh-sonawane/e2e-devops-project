@@ -1,630 +1,246 @@
 # ImageFlow — Architecture
 
-## 1. Project Overview
-
-This repository is a production-inspired DevOps ecosystem built from scratch. It demonstrates end-to-end DevOps practices: application development, containerization, CI/CD, infrastructure as code, cloud provisioning, orchestration, deployment strategies, monitoring, security, reliability engineering, and GitOps — all running locally via [Floci](https://floci.io), a free MIT-licensed AWS emulator.
-
-**The application** is **ImageFlow**: an event-driven image pipeline. Users upload images, which are stored in S3, processed by a real Docker-backed Lambda (thumbnail generation + metadata extraction in pure Python/Pillow), indexed in DynamoDB, and announced over SNS.
-
-### Core Principles
-
-- **Everything runs locally** — no cloud account, no auth tokens, no costs
-- **Real Docker fidelity** — Lambda, RDS, EKS, EC2, ECS, ElastiCache, MSK, OpenSearch spin up real containers
-- **Same SDKs & tools** — AWS CLI, boto3, Terraform, CDK all work unchanged against `http://localhost:4566`
-- **Interview-driven** — every phase builds toward confident interview answers
-- **Documentation-first** — architecture, runbooks, and troubleshooting guides live in the repo
+> **A production-inspired architecture, explained from first principles.** This document takes you from *"what are we building?"* to *"how does every piece fit, why was it designed this way, and how would I defend it in an interview?"* — with honest notes on what's emulated locally vs. what would change on real AWS.
 
 ---
 
-## 2. Architecture at a Glance
+## 1. The system in one paragraph
 
-```
-┌───────────────────────────────────────────────────────────────────┐
-│                      Local Development Machine                     │
-│                                                                    │
-│  ┌──────────────────┐         ┌────────────────────────────────┐   │
-│  │  ImageFlow API    │         │        Floci (port 4566)       │   │
-│  │  (FastAPI)        │         │  ┌──────────────────────────┐  │   │
-│  │                   │         │  │   HTTP Router (Vert.x)    │  │   │
-│  │  /health /version │         │  └──────┬───────────────────┘  │   │
-│  │  /metrics /config │         │         │                      │   │
-│  │  /api/v1/images   │         │  ┌──────┴───────────────────┐  │   │
-│  └────────┬─────────┘         │  │  Stateless Services       │  │   │
-│           │                    │  │  SQS, SNS, IAM, STS,      │  │   │
-│           │ upload             │  │  KMS, Cognito, SSM,       │  │   │
-│           ▼                    │  │  EventBridge, API GW,     │  │   │
-│  ┌──────────────────┐         │  │  CloudWatch, Step Funcs   │  │   │
-│  │  S3 event        │───────► │  └──────────────────────────┘  │   │
-│  │  notification    │          │  ┌──────────────────────────┐  │   │
-│  └──────────────────┘          │  │  Stateful Services        │  │   │
-│                                │  │  S3, DynamoDB, Streams    │  │   │
-│  ┌──────────────────┐         │  └──────────────────────────┘  │   │
-│  │  IaC (Terraform)  │         │  ┌──────────────────────────┐  │   │
-│  │  state in S3      │         │  │  Container Services      │  │   │
-│  │  locking in DDB   │         │  │  Lambda  → real Docker   │  │   │
-│  └──────────────────┘         │  │  EKS     → real k3s       │  │   │
-│                                │  │  ECS     → real tasks     │  │   │
-│  ┌──────────────────┐         │  │  ECR     → real registry  │  │   │
-│  │  CI/CD (dual-loop)│         │  │  RDS/ElastiCache/MSK/OS  │  │   │
-│  └──────────────────┘         │  └──────────────────────────┘  │   │
-│  ┌──────────────────┐         └────────────────────────────────┘   │
-│  │  floci-ui (:3000) │                ┌──────────────────────┐     │
-│  └──────────────────┘                 │   Docker Engine      │     │
-│  ┌──────────────────┐                 │  (all containers)    │     │
-│  │  Observability    │                 └──────────────────────┘     │
-│  └──────────────────┘                                                │
-└───────────────────────────────────────────────────────────────────┘
-```
+**ImageFlow is an event-driven image-processing pipeline** — the DevOps "hello world" that happens to touch *every* discipline:
+
+1. A user uploads an image through a **FastAPI** service.
+2. The service stores the original in **S3** and writes a `PENDING` record to **DynamoDB**.
+3. An **S3 event notification** triggers a **Lambda** function (a real Docker container running Pillow).
+4. The Lambda extracts metadata, generates a thumbnail, updates the record to `PROCESSED`, and publishes to **SNS**.
+5. The user retrieves the original + thumbnail via presigned URLs.
+
+Around that deliberately simple core sits the *real* subject of the project — the platform layer: Terraform IaC, a real Kubernetes cluster (k3s via Floci EKS), dual-loop CI/CD, observability, security hardening, and reliability engineering. **The app is simple so the engineering around it can be deep.**
 
 ---
 
-## 3. System Components
+## 2. Why this architecture (the three core decisions)
 
-### 3.1 ImageFlow API (Sample Application)
+### 2.1 Event-driven, not request-driven — because that's how real systems scale
 
-A REST API service built with FastAPI (Python 3.12) — the deployment target and the entry point of the pipeline.
+The pipeline is **decoupled**: the upload path never calls the processor directly. S3 → Lambda is a fire-and-forget event. This means:
 
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/health` | GET | Liveness probe — returns 200 |
-| `/version` | GET | Version info — Git SHA, build timestamp |
-| `/metrics` | GET | Prometheus-format metrics |
-| `/config` | GET | Runtime configuration dump |
-| `/api/v1/images` | POST | Upload an image (multipart) → S3 + DynamoDB `PENDING` record |
-| `/api/v1/images/{id}` | GET | Metadata + pre-signed S3 URLs (original + thumbnail) |
-| `/api/v1/images` | GET | List / query processed images (pagination) |
+- The API stays fast (it doesn't wait for processing).
+- The processor scales independently (Lambda containers spin up per event).
+- Failure is visible and retryable (a `FAILED` record is a dead-letter, not a hung request).
 
-Environment configuration via env vars; secrets injected through Floci Secrets Manager or Kubernetes Secrets at deploy time.
+**Interview answer:** *"The upload path and the processing path are decoupled by an event — that's the same pattern used for order processing, video transcoding, or anything where work happens asynchronously. It's why the system degrades gracefully under load."*
 
-### 3.2 Image Processor Lambda
+### 2.2 The app is thin, the platform is everything
 
-A **real Docker-backed Lambda** (Floci runs Lambda in actual containers) that does the pipeline's work in deterministic Python:
+ImageFlow's FastAPI service is intentionally minimal — a few routes, three service clients (S3, DynamoDB, SNS). The value of the repository is that this thin app is **operated like a production system**: blue/green deployments, chaos drills, metrics-driven autoscaling, secret rotation, dependency scanning. That's the exact ratio most real teams have — a simple business app inside a sophisticated platform.
 
-1. Reads the uploaded image from S3 (bucket `imageflow-uploads`, `uploads/` prefix).
-2. Extracts metadata: format, width, height, byte size, SHA-256.
-3. Generates a 256px thumbnail using Pillow and stores it in S3 (bucket `imageflow-thumbs`, `thumbs/` prefix).
-4. Updates the DynamoDB record: `status=PROCESSED` + metadata + thumbnail key.
-5. Publishes a message of type `image.processed` to the SNS topic `imageflow-events`.
+### 2.3 Everything runs locally on Floci — real services, zero cost
 
-Packaged as a custom image pushed to Floci ECR (Pillow runs inside the image, so no dependency-layer tricks are needed).
+**Floci** is an MIT-licensed AWS emulator at `localhost:4566`. Crucially, it doesn't *simulate* everything — for many services it runs **real programs in real Docker containers**:
 
-**Trigger path (configurable):**
-- **Primary:** S3 event notification → Lambda (classic event-driven serverless).
-- **Fallback A:** DynamoDB Streams → Lambda event source mapping.
-- **Fallback B:** direct `boto3` invocation from the API.
-
-Selected via env var `IMAGE_PROCESSING_TRIGGER=s3|dynamodb|direct`. Fallbacks guarantee the pipeline always works locally regardless of Floci version wiring behavior.
-
-### 3.3 Floci — Local AWS Control Plane
-
-Floci runs as a Docker container (or native binary via `floci start`) on port 4566 and provides **69 AWS services**.
-
-| Layer | Description | Examples |
-|---|---|---|
-| **HTTP Router** | JAX-RS / Vert.x request dispatch | Routes all API calls |
-| **Stateless Services** | In-process handlers | SQS, SNS, IAM, STS, KMS, Cognito, EventBridge, API Gateway, CloudWatch, Secrets Manager, Step Functions, CodePipeline, CodeDeploy, WAF v2 |
-| **Stateful Services** | In-process with storage backend | S3, DynamoDB, DynamoDB Streams |
-| **Container Services** | Real Docker-backed execution | Lambda, RDS, EKS, ECS, EC2, ElastiCache, MSK, OpenSearch, Neptune, DocumentDB, CodeBuild |
-| **Registry** | Real OCI-compatible registry | ECR — `docker push` / `docker pull`, image-backed Lambda |
-
-**Key characteristics (verified from official docs):**
-- Startup ~24 ms, idle memory ~13 MiB, image ~90 MB
-- License: MIT — free forever, no auth token, no feature gates (LocalStack Community requires a token since March 2026)
-- Auth: none required — any non-empty credentials work (12-digit keys enable multi-account isolation)
-
-### 3.4 CI/CD Pipeline (Dual-Loop)
-
-**Layer 1 — GitHub Actions (outer loop):**
-- Triggered on push/PR to `main`
-- Lint, format, type-check, unit tests
-- SAST + dependency scanning + image scanning (Trivy)
-- Build and push Docker images to Floci ECR
-- Run Floci-backed integration tests
-- Terraform plan validation
-
-**Layer 2 — Floci CodePipeline (inner loop):**
-- Local pipeline orchestration (in-process)
-- CodeBuild for real `buildspec` execution (real Docker)
-- CodeDeploy for deployment strategies: rolling, blue/green, canary, auto-rollback
-
-### 3.5 Infrastructure as Code
-
-Terraform manages all infrastructure:
-
-```text
-terraform/
-├── modules/
-│   ├── storage/          # S3 buckets (uploads, thumbs, state, logs)
-│   ├── database/         # DynamoDB table + Streams
-│   ├── compute/          # Lambda function + triggers
-│   ├── messaging/        # SNS topics + subscriptions
-│   ├── networking/       # VPC, subnets, security groups
-│   ├── iam/              # Roles, policies, instance profiles
-│   └── orchestration/    # EKS (k3s) and ECS cluster definitions
-├── environments/
-│   ├── dev/              # Floci local development
-│   └── ci/               # CI pipeline environment
-└── backend.tf            # S3 remote state + DynamoDB locking via Floci
-```
-
-### 3.6 Container Orchestration
-
-Two orchestration targets for learning:
-
-**Floci EKS** — a real k3s cluster (live Kubernetes API server):
-- Deployments, Services, Ingress
-- ConfigMaps, Secrets
-- Horizontal Pod Autoscaler
-- Rolling updates
-- Helm chart: `helm/imageflow`
-
-**Floci ECS** — real container tasks:
-- Task definitions, services, capacity providers
-- Fargate-shaped (local) task execution
-
-### 3.7 Monitoring & Observability
-
-| Component | Tool | Source |
-|---|---|---|
-| Metrics | Floci CloudWatch Metrics | Application + infrastructure |
-| Logs | Floci CloudWatch Logs | API stdout + Lambda + container logs |
-| Search | Floci OpenSearch (real engine) | Log aggregation and dashboards *(not part of the Phase 13 CloudWatch-only delivery — ADR-11)* |
-| Alerts | Floci CloudWatch Alarms → EventBridge / SNS | Threshold-based alerting |
-| Dashboard | floci-ui (`localhost:3000`) | Visual resource browser |
-| App metrics | Prometheus-format `/metrics` | Upload count, processing latency, failure rate |
-
-> **Phase 13 delivered:** the API emits Prometheus pipeline metrics
-> (`imageflow_uploads_total`, `imageflow_upload_errors_total`,
-> `imageflow_upload_duration_seconds`) and CloudWatch custom metrics
-> (namespace `ImageFlow`); the Lambda emits `ProcessedCount`/`FailedCount`;
-> an optional CloudWatchLogHandler ships API logs to `/imageflow/api`; the
-> Terraform `observability` module provisions alarms (`imageflow-failed-images`,
-> `imageflow-upload-errors`) + an EventBridge rule → SNS. Full details:
-> `docs/monitoring.md` · probe `./scripts/observability.sh`.
-
-### 3.8 Security
-
-| Service | Role |
+| "Real" on Floci | Meaning |
 |---|---|
-| Floci IAM + STS | Users, roles, policies, instance profiles, SigV4 auth |
-| Floci KMS | Encryption keys for S3 / DynamoDB |
-| Floci Secrets Manager | Application secrets |
-| Floci Cognito | User pools, JWT auth (optional phase) |
-| Floci ACM | TLS certificates |
-| Floci WAF v2 | Web ACLs, rate limiting |
-| Floci CloudTrail | API activity logging |
+| Lambda | A real Docker container executes our Python code |
+| EKS | A **real k3s Kubernetes cluster** (control plane + node) |
+| ECR | A real OCI registry — `docker push` / `docker pull` work |
+| EC2 + ASG | Real containers launched as instances; the auto-scaling group genuinely replaces terminated instances |
+| CodeBuild | Real buildspec execution in a container |
+| CloudWatch, KMS, Cognito, WAF, etc. | In-process but API-faithful (SigV4 validation, real JWTs, real KMS round trips) |
 
-> **Phase 14 delivered:** the Terraform `security` module provisions a KMS
-> key + alias, the `imageflow/app-secret` Secrets Manager secret, a Cognito
-> pool/client/user, the `imageflow-web-acl` (rate-limit + managed rules), and
-> the least-privilege `imageflow-reader` IAM user. The API can source its AWS
-> credentials from Secrets Manager (`IMAGEFLOW_SECRET_NAME`, ADR-12); the
-> Lambda IAM policy is tightened to log-group scoping. CI enforces
-> pip-audit + gitleaks + trivy gates. Honest limit: Floci validates SigV4
-> but does not enforce IAM authorization. Full details: `docs/security.md`
-> · demos: `scripts/security.sh` · audit: `scripts/security-audit.sh`.
+The same SDKs, CLI, and Terraform provider work unchanged — **skills transfer 1:1 to real AWS, at $0 cost and zero blast radius.**
 
-### 3.9 Reliability
+---
 
-| Component | Role |
+## 3. Architecture views
+
+### 3.1 Logical view — the pipeline
+
+```
+┌────────────┐   POST /api/v1/images    ┌───────────────────────────────┐
+│   Client   │ ───────────────────────▶ │         ImageFlow API         │
+└────────────┘                          │  (FastAPI, Python 3.12)       │
+        ▲                               │  routes/images.py             │
+        │  metadata + presigned URLs    │  services: storage (S3) ·     │
+        └─────────────────────────────── │  metadata (DDB) · secrets ·  │
+                                        │  observability                │
+                                        └──────────────┬────────────────┘
+                                                       │ 1. put original in S3
+                                                       │ 2. put_item (PENDING)
+                                                       ▼
+                                        ┌───────────────────────────────┐
+                                        │  S3  imageflow-uploads        │
+                                        │  event notification (prefix   │
+                                        │  uploads/)                    │
+                                        └──────────────┬────────────────┘
+                                                       │ 3. S3 event → invoke
+                                                       ▼
+                                        ┌───────────────────────────────┐
+                                        │  Lambda  image-processor      │
+                                        │  (Pillow: thumbnail + meta)   │
+                                        └──────────────┬────────────────┘
+                                          4. thumb →    │ 5. update_item
+                                          S3 (thumbs)   │   PROCESSED
+                                                        ▼
+                                        ┌───────────────────────────────┐
+                                        │  DynamoDB  ImageFlowMetadata  │
+                                        │  6. SNS publish               │
+                                        │   imageflow-events            │
+                                        └───────────────────────────────┘
+```
+
+### 3.2 Layered view — the platform
+
+| Layer | Components | Ownership |
+|---|---|---|
+| **Presentation** | FastAPI routes: `/health /version /metrics /config`, `/api/v1/images*` | `app/routes/` |
+| **Application services** | S3 client, DynamoDB client, secrets resolution, observability emitter | `app/services/` |
+| **Serverless compute** | Lambda image-processor (custom image, S3-triggered) | `lambda/image-processor/` |
+| **Data plane** | S3 (uploads/thumbs/state/artifacts) · DynamoDB (metadata + locks) · SNS | Terraform modules |
+| **Control plane** | Terraform state/locking · CloudWatch alarms/rules · KMS · Secrets Manager · Cognito · WAF · IAM | Terraform modules |
+| **Orchestration** | Helm chart → k3s Deployment/Service/ConfigMap/Secret/HPA · k8s demo manifests | `helm/`, `k8s/demo/` |
+| **Delivery** | GitHub Actions (outer) · CodePipeline→CodeBuild(Kaniko)→CodeDeploy (inner) | workflows, buildspec, appspec |
+| **Operations** | 18 shellcheck-clean scripts (incl. CodeDeploy hooks): deploy, health-check, backup, observability, security, reliability, cleanup, lint, push, setup, process-pending | `scripts/` |
+
+### 3.3 Deployment view — one app, three homes
+
+| Home | How | Why it matters |
+|---|---|---|
+| **Laptop (venv)** | `uvicorn app.main:app` | Fastest inner loop |
+| **Kubernetes** | Helm chart → Floci EKS (real k3s); HPA 1–3 @70% CPU | Real orchestration, real deployment strategies |
+| **CI/CD pipeline** | CodePipeline → CodeBuild (Kaniko) → CodeDeploy | The AWS-native assembly line, end-to-end `Succeeded` |
+
+Same image, three delivery paths — each one a different interview story.
+
+---
+
+## 4. Component deep-dives
+
+### 4.1 The API — `app/`
+
+- **Upload flow (record-first, deliberately):** the route computes the deterministic S3 key (`storage.original_key`), writes the DynamoDB `PENDING` record **before** the object lands in S3. Why? The S3 event can fire within milliseconds of the put — if the record doesn't exist yet, the Lambda correctly skips it ("missing record") and the image is stuck `PENDING` forever. Record-first guarantees the event always finds its record. **And if the upload itself fails, the record is rolled back (`delete_record`)** — no zombie `PENDING` items. This ordering is a live-drill-proven fix, not theory.
+- **Failure semantics:** any cloud failure → logged server-side, returned as `503 cloud unavailable` (never leak internals); error counters increment.
+- **Security hygiene:** filename sanitization (`Path().name` strips `../`), 10 MiB size cap, secrets masked in `/config`, credentials sourced from Secrets Manager when `IMAGEFLOW_SECRET_NAME` is set.
+
+### 4.2 The Lambda — `lambda/image-processor/`
+
+A standalone, custom-image Lambda (imports nothing from `app/`): reads the original from S3, extracts metadata (format, dimensions, size, SHA-256), writes a 256px aspect-preserving thumbnail to S3, updates the record to `PROCESSED`, publishes `image.processed` to SNS. Failure → `FAILED` + `error` field (an observable dead-letter). Processing is idempotent — already-`PROCESSED` records are skipped — which makes event replays and retries safe.
+
+**Trigger paths (configurable via `IMAGE_PROCESSING_TRIGGER`):** primary S3 event; fallback direct invocation (`scripts/process-pending.sh`, `reliability.sh chaos fail-image` replay path).
+
+### 4.3 Infrastructure as Code — `terraform/`
+
+Seven modules, one dev environment, **S3 remote state + DynamoDB locking on Floci** (the same professional pattern real teams use):
+
+| Module | Provisions |
 |---|---|
-| Backup/restore | Paginated DynamoDB export + S3 sync → `data/backups/cloud-<ts>/` with manifest; restore via batch-write + sync with count verification |
-| DR drill | Probe data → backup → simulated loss → restore → verify → **measured RTO** (RPO = backup cadence) |
-| Failure injection | k3s pod kill (Deployment controller self-heal), API process kill (restart), corrupt upload → Lambda FAILED dead-letter → fix + event replay → PROCESSED |
-| Auto-scaling | k3s HPA + Deployment reconcilers (live); ASG `imageflow-asg` via Terraform `autoscaling` module — launch-template-backed, **reconciles replacements live** (ADR-13); `reconcile` command = explicit desired-vs-actual loop |
+| `storage` | uploads + thumbs buckets, S3→Lambda notification |
+| `database` | `ImageFlowMetadata` (PAY_PER_REQUEST) |
+| `messaging` | `imageflow-events` SNS topic |
+| `compute` | IAM role/policy, ECR repo, image-backed Lambda, log-group-scoped policy |
+| `observability` | CloudWatch alarms (`imageflow-failed-images`, `imageflow-upload-errors`) + EventBridge→SNS rule |
+| `security` | KMS key+alias, `imageflow/app-secret`, Cognito pool/client/user, WAF v2 ACL, least-privilege IAM user |
+| `autoscaling` | Launch template + ASG (`imageflow-asg`, min 1/max 3/desired 1, explicit AZs) |
 
-> **Phase 15 delivered:** `scripts/reliability.sh` (backup · restore · drill ·
-> chaos kill-pod/kill-instance/kill-api/fail-image · scaling · reconcile
-> [--apply] · all) with 17 behavior tests; Terraform `modules/autoscaling`
-> (launch template + ASG — launch *configurations* fail on Floci, templates
-> persist and the ASG **genuinely reconciles replacements**, probe-verified
-> via `chaos kill-instance`); full write-up in `docs/reliability.md` (ADR-13).
-> DynamoDB scan/batch-write, s3 sync, and lambda invoke (the backup/restore +
-> retry paths) are fully live.
->
-> **Full-system live drill (2026-08-05, PR #4 `eb20ed1`)** — every layer run
-> together on Floci caught & fixed four real issues: `chaos kill-api`'s pid was
-> the backgrounded-compound wrapper on macOS (off-by-one; `deploy.sh` now
-> resolves the real port listener via lsof/pgrep), the fail-image demo + the
-> API route both uploaded to S3 *before* writing the DynamoDB record (S3 event
-> could fire against a missing record → stuck PENDING; now record-first, with
-> rollback so a failed upload deletes its record — no zombies), and Terraform
-> showed perpetual in-place diffs from Floci normalization quirks (now
-> `ignore_changes`, plan idempotent). The whole system is reproducible by
-> hand: `docs/manual-verification.md`.
+**Idempotency is verified, not assumed:** `terraform plan` reports *"No changes"* on every run. Where Floci doesn't persist certain attributes (alarm `datapoints_to_alarm`, Cognito pool defaults, IAM user tags), documented `ignore_changes` blocks keep the plan converged without masking real-AWS behavior.
+
+### 4.4 Kubernetes — `helm/imageflow` + Floci EKS (real k3s)
+
+The chart ships: Deployment (non-root uid 1000, liveness/readiness on `/health`, RollingUpdate maxSurge 1 / maxUnavailable 0), Service, ConfigMap + Secret (checksum-annotated for automatic rollouts), HPA (1–3 @70%), optional Ingress. Deployed on a genuine k3s cluster; uploads through the clustered API are auto-processed by the Lambda — cross-target integration (EKS → S3 → Lambda) verified live.
+
+### 4.5 CI/CD — the dual loop
+
+- **Outer (GitHub Actions):** quality (ruff, shellcheck, terraform validate, helm lint) → tests (54) → build (non-root image, trivy-scanned) → security gates (pip-audit, gitleaks, trivy fs). **Green on every push.**
+- **Inner (Floci):** CodePipeline (S3 source) → CodeBuild (real buildspec: gates, then **Kaniko daemonless** image build → ECR) → CodeDeploy (on-premises group, auto-rollback). Execution status: **Succeeded**.
+
+### 4.6 Observability — three planes
+
+1. **Prometheus-format `/metrics`** — pipeline counters + upload-latency histogram.
+2. **CloudWatch custom metrics** — API: `Uploads`/`UploadErrors`; Lambda: `ProcessedCount`/`FailedCount`.
+3. **Alerts** — Terraform alarms → SNS, plus an EventBridge rule on alarm state changes (the demonstrable local path; Floci stores alarm state but not alarm actions — ADR-11).
+
+### 4.7 Security — defense in depth
+
+KMS encryption keys · Secrets Manager (the app can source AWS credentials from a secret) · Cognito (full auth flow, real JWT claims) · WAF v2 (rate-limit + managed rules) · least-privilege IAM (single-bucket read-only demo user; Lambda policy scoped to its log group) · CI gates (pip-audit, gitleaks, trivy). **Honest limit (ADR-12):** Floci validates SigV4 but doesn't enforce IAM authorization — the design is real-AWS-correct; enforcement is a real-account control.
+
+### 4.8 Reliability — proven, not promised
+
+`scripts/reliability.sh` (with 17 behavior tests): paginated DynamoDB backup + S3 sync + manifest · restore with `batch-write-item` retries and count verification · **DR drill with measured RTO/RPO** · chaos: `kill-pod` (Deployment self-heals), `kill-instance` (ASG replacement in ~7–9s — genuinely live via launch templates), `kill-api` (process restart), `fail-image` (dead-letter → fix → replay → `PROCESSED`) · `scaling` (HPA + Deployment + ASG reconcilers) · `reconcile [--apply]` (explicit desired-vs-actual loop).
 
 ---
 
-## 4. Floci Integration Deep Dive
+## 5. Data model
 
-### 4.1 Starting Floci
+### DynamoDB — `ImageFlowMetadata`
 
-**Preferred — native CLI:**
-```bash
-curl -fsSL https://floci.io/install.sh | sh
-floci start
-eval $(floci env)
-```
-
-**Alternative — Docker Compose:**
-```yaml
-# floci-compose.yml
-services:
-  floci:
-    image: floci/floci:latest
-    ports:
-      - "4566:4566"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./data:/app/data
-    environment:
-      - FLOCI_STORAGE_MODE=hybrid
-      - FLOCI_HOSTNAME=floci
-      - FLOCI_DEFAULT_REGION=us-east-1
-```
-
-### 4.2 Environment Configuration
-
-```bash
-export AWS_ENDPOINT_URL=http://localhost:4566
-export AWS_DEFAULT_REGION=us-east-1
-export AWS_ACCESS_KEY_ID=test
-export AWS_SECRET_ACCESS_KEY=test
-```
-
-### 4.3 Service Mapping (ImageFlow)
-
-| Project Phase | AWS Service | Floci Implementation |
+| Attribute | Type | Notes |
 |---|---|---|
-| 1 — App Foundation | API Gateway / FastAPI | In-process REST handler |
-| 7 — Containerization | ECR | Real OCI registry, `docker push/pull`, image-backed Lambda |
-| 8 — CI/CD | CodeBuild | Real Docker buildspec execution |
-| 8 — CI/CD | CodePipeline | In-process pipeline orchestration |
-| 8 — CI/CD | CodeDeploy | In-process with Lambda traffic shifting |
-| 9 — IaC | S3 (state) | In-process storage backend |
-| 9 — IaC | DynamoDB (locking) | In-process storage backend |
-| 10 — Cloud Infra | S3, DynamoDB, Lambda, SNS | In-process storage + real Docker Lambda |
-| 10 — Cloud Infra | EC2 | Real Linux containers, SSH, IMDS, UserData |
-| 10 — Cloud Infra | ELB v2 | In-process ALB/NLB with Lambda targets |
-| 10 — Cloud Infra | RDS | Real PostgreSQL/MySQL containers |
-| 10 — Cloud Infra | ElastiCache | Real Valkey/Redis containers |
-| 11 — Orchestration | EKS | Real k3s cluster (live K8s API server) |
-| 11 — Orchestration | ECS | Real container tasks |
-| 12 — Deploy Strategies | CodeDeploy | Traffic shifting, auto-rollback |
-| 13 — Monitoring | CloudWatch Logs / Metrics | In-process ingestion + alarms |
-| 13 — Monitoring | OpenSearch | Real OpenSearch engine |
-| 14 — Security | IAM / KMS / Secrets Manager / Cognito / ACM / WAF v2 | In-process, SigV4 validation |
-| 15 — Reliability | Backup | In-process simulated lifecycle |
-| 16 — GitOps | EKS | k3s for ArgoCD/Flux targets |
-| 17 — Troubleshooting | All | Simulate failures across services |
+| `image_id` | S (partition key) | UUID |
+| `filename` / `content_type` / `size` | S/S/N | Upload metadata |
+| `status` | S | `PENDING` → `PROCESSED` \| `FAILED` |
+| `original_key` / `thumbnail_key` | S | S3 keys |
+| `metadata` | M | format, width, height, sha256 |
+| `error` | S | Set when FAILED (dead-letter) |
+| `uploaded_at` | S | ISO timestamp |
 
-### 4.4 Storage Modes
+### S3
 
-| Mode | Behavior | Use |
+| Bucket | Prefix | Content |
 |---|---|---|
-| `memory` | Entirely in RAM | CI, ephemeral tests |
-| `persistent` | Immediate flush to disk per write | Simple local state |
-| `hybrid` | In-memory + periodic async flush (5s) | **Default for development** |
-| `wal` | Write-ahead log before responding | Maximum durability |
-
-### 4.5 Multi-Account Isolation
-
-Floci supports per-account isolation via 12-digit `AWS_ACCESS_KEY_ID`:
-
-```bash
-AWS_ACCESS_KEY_ID=111111111111 aws s3 mb s3://prod-bucket
-AWS_ACCESS_KEY_ID=222222222222 aws s3 mb s3://dev-bucket
-# Resources are invisible across accounts
-```
+| `imageflow-uploads` | `uploads/` | Originals (event notification on this prefix) |
+| `imageflow-thumbs` | `thumbs/` | Thumbnails |
+| `imageflow-state` | — | Terraform remote state |
+| `imageflow-artifacts` | — | Pipeline source.zip + Kaniko toolchain |
 
 ---
 
-## 5. Repository Structure
+## 6. Key design decisions (with ADRs)
 
-```text
-.
-├── .ai_memory/                 # AI memory bank
-├── .github/workflows/          # GitHub Actions CI/CD
-├── app/                        # ImageFlow API
-│   ├── main.py                 # FastAPI entry point
-│   ├── routes/                 # API endpoints
-│   ├── services/               # Business logic (S3, DynamoDB, SNS, Lambda clients)
-│   ├── config/                 # Configuration + env parsing
-│   ├── tests/                  # Unit tests
-│   └── requirements.txt        # Pinned dependencies
-├── lambda/
-│   └── image-processor/        # Lambda source + Dockerfile (Pillow)
-├── terraform/
-│   ├── modules/                # Reusable Terraform modules
-│   ├── environments/           # dev/ and ci/
-│   └── backend.tf              # S3 + DynamoDB backend via Floci
-├── helm/
-│   └── imageflow/              # Helm chart (Deployment, Service, Ingress, ConfigMap, HPA)
-├── scripts/                    # deploy.sh, health-check.sh, cleanup.sh, backup.sh
-├── tests/                      # integration/ (Floci-backed), e2e/
-├── docs/                       # architecture.md, roadmap.md, setup.md
-├── docker-compose.yml          # Local development services
-├── floci-compose.yml           # Floci local cloud
-├── Makefile                    # Common commands
-├── AGENTS.md                   # AI agent rules
-└── README.md                   # Master vision
-```
-
----
-
-## 6. Development Workflow
-
-```
-                  ┌─────────────┐
-                  │  Developer   │
-                  └──────┬──────┘
-                         │
-                  ┌──────▼──────┐
-                  │  Git Branch  │
-                  │ (feature/*)  │
-                  └──────┬──────┘
-                         │
-              ┌──────────▼──────────┐
-              │  Local Development   │
-              │  1. Start Floci      │
-              │  2. Terraform apply  │
-              │  3. Run ImageFlow    │
-              │  4. Test endpoints   │
-              └──────────┬──────────┘
-                         │
-                  ┌──────▼──────┐
-                  │  Pull Request │
-                  └──────┬──────┘
-                         │
-              ┌──────────▼──────────┐
-              │  GitHub Actions CI  │
-              │  - Lint & typecheck │
-              │  - Unit tests       │
-              │  - Build Docker img │
-              │  - Push to ECR      │
-              │  - Integration tests│
-              │  - Terraform plan   │
-              └──────────┬──────────┘
-                         │
-                  ┌──────▼──────┐
-                  │  Merge → main │
-                  └──────┬──────┘
-                         │
-              ┌──────────▼──────────┐
-              │  Deployment Pipeline │
-              │  - CodePipeline      │
-              │  - CodeBuild image   │
-              │  - CodeDeploy (BG/C) │
-              │  - Smoke tests       │
-              │  - Release tagging   │
-              └──────────────────────┘
-```
-
----
-
-## 7. CI/CD Pipeline Architecture
-
-### 7.1 GitHub Actions (Outer Loop)
-
-```yaml
-# .github/workflows/ci.yml
-name: CI
-on: [push, pull_request]
-jobs:
-  quality:
-    runs-on: ubuntu-latest
-    steps:
-      - lint, format, type-check
-      - SAST + dependency scan + Trivy image scan
-  test:
-    runs-on: ubuntu-latest
-    services:
-      floci:
-        image: floci/floci:latest
-        ports: [4566:4566]
-    steps:
-      - unit tests
-      - integration tests (Floci-backed)
-  build:
-    needs: [quality, test]
-    steps:
-      - build Docker image
-      - push to Floci ECR
-```
-
-### 7.2 Floci CodePipeline (Inner Loop)
-
-```
-Source (Git) → CodeBuild (test) → CodeBuild (build)
-    → CodeDeploy (beta) → Approval → CodeDeploy (prod)
-```
-
-### 7.3 Deployment Strategies
-
-| Strategy | Implementation | Floci Service |
+| Decision | Why (one line) | Record |
 |---|---|---|
-| **Rolling** | Incremental replacement of ECS/EKS tasks | ECS rolling update / k8s Deployment |
-| **Blue/Green** | Two environments, swap traffic | CodeDeploy + ELB target groups |
-| **Canary** | Percentage-based traffic shift | CodeDeploy + weighted ELB targets |
-| **Rollback** | Automatic revert on failure | CodeDeploy auto-rollback |
+| Floci over real AWS | $0, zero blast radius, real-Docker fidelity for the services that matter | ADR-01 |
+| Event-driven (S3→Lambda) | Decoupled, scalable, observable failure | ADR-07 |
+| Kaniko in CodeBuild | Floci's build container has no Docker daemon — the industry daemonless answer | ADR-10 (deviation log) |
+| Launch templates over launch configurations | Launch configs don't persist on Floci; templates are modern AWS best practice anyway | ADR-13 |
+| `ignore_changes` for Floci quirks | Keeps plans idempotent without hiding real-AWS behavior | ADR-11/12/13 |
+| Record-before-object on upload | Kills the stuck-`PENDING` race the live drill found | PR #4 |
+| `ignore_changes` documented everywhere | "No changes" is a *proven* property, not a claim | PR #4 |
+| Secrets-backed credentials | `IMAGEFLOW_SECRET_NAME` → app resolves AWS creds from Secrets Manager (non-fatal fallback) | ADR-12 |
 
 ---
 
-## 8. Infrastructure Provisioning
+## 7. Honest limits (what's emulated vs. real)
 
-### 8.1 Terraform Workflow
-
-```bash
-cd terraform
-terraform init        # backend = Floci S3 + DynamoDB
-terraform plan
-terraform apply
-terraform destroy
-```
-
-### 8.2 Provisioned Resources (ImageFlow)
-
-```
-S3 buckets
-├── imageflow-uploads/          # Original images
-├── imageflow-thumbs/           # Generated thumbnails
-├── imageflow-state/            # Terraform remote state
-└── imageflow-logs/             # CloudWatch log archive
-DynamoDB
-├── ImageFlowMetadata           # App table (status, metadata, keys) + Streams
-└── TerraformLocks              # State locking
-Lambda
-└── image-processor             # Real Docker, Pillow, S3-triggered
-SNS
-└── imageflow-events            # image.processed topic
-IAM
-├── ImageFlowAPIRole            # S3, DynamoDB, SNS, Lambda invoke
-├── ImageProcessorRole          # S3, DynamoDB, SNS, CloudWatch logs
-└── CodeBuildRole               # ECR push, S3 artifacts
-[Optional phases] VPC, ALB, EC2, RDS, ElastiCache, ECS, EKS, Cognito, WAF
-```
-
----
-
-## 9. Containerization Strategy
-
-### 9.1 Multi-Stage Docker Build (API)
-
-```
-Stage 1: Build
-  Base: python:3.12-slim
-  Action: Install deps, run tests
-
-Stage 2: Production
-  Base: python:3.12-slim
-  Action: Copy artifacts, set entrypoint
-  User: non-root
-  Health: HEALTHCHECK /health
-  Label: git-sha, build-timestamp
-```
-
-### 9.2 Lambda Image (image-processor)
-
-Built from the public Lambda Python base image (`public.ecr.aws/lambda/python:3.12`), `pip install Pillow`, packaged and pushed to **Floci ECR**, then registered as an image-backed Lambda function.
-
-### 9.3 Image Registry (Floci ECR)
-
-```bash
-aws ecr create-repository --repository-name imageflow-api
-docker build -t imageflow-api .
-docker tag imageflow-api localhost:4566/imageflow-api:latest
-docker push localhost:4566/imageflow-api:latest
-```
-
----
-
-## 10. Security Architecture
-
-### 10.1 IAM Design
-
-```text
-AWS Account (000000000000 via Floci)
-├── IAM Roles
-│   ├── ImageFlowAPIRole (apigateway.amazonaws.com / ecs-tasks / pod identity)
-│   │   └── S3 read/write (uploads, thumbs), DynamoDB CRUD, SNS Publish, Lambda Invoke
-│   ├── ImageProcessorRole (lambda.amazonaws.com)
-│   │   └── S3 read/write, DynamoDB Update, SNS Publish, CloudWatch Logs
-│   ├── EKSRole (eks.amazonaws.com)
-│   │   └── EKS policies, ECR Pull
-│   └── CodeBuildRole (codebuild.amazonaws.com)
-│       └── ECR Push, S3 ReadWrite
-└── IAM Users
-    └── developer (programmatic access, MFA)
-```
-
-### 10.2 Secrets Flow
-
-```text
-Application Launch
-    │
-    ▼
-Floci Secrets Manager ←── KMS (encryption)
-    │
-    ▼
-Application reads secret at startup (cached, periodic refresh)
-    │
-    ▼
-Used as env vars or file mounts
-```
-
----
-
-## 11. Technical Decisions & Trade-offs
-
-### 11.1 Why Floci vs Real AWS
-
-| Factor | Floci | Real AWS |
+| Capability | Local (Floci) | Real AWS |
 |---|---|---|
-| Cost | $0 | Pay-as-you-go |
-| Speed | 24 ms startup | N/A (remote) |
-| Fidelity | Real containers for key services | Production-grade |
-| Blast radius | None — local container reset | Can cost money |
-| Auth | Any non-empty credentials | Real IAM + keys |
-| Service count | 69 | 200+ |
-| Scale testing | Limited to machine resources | Unlimited |
+| Lambda, EKS (k3s), ECR, EC2/ASG, CodeBuild | **Real containers** — genuinely run | Same (production-grade) |
+| SigV4 signing | Validated | Enforced + authorized |
+| IAM authorization | **Not enforced** (policy is a design/audit exercise) | Enforced |
+| CodeDeploy lifecycle | Simulated (status Succeeded; appspec hooks not executed) | Real agents + hooks |
+| CloudWatch alarm actions | Stored state only, no actions | Actions fire |
+| WAF enforcement | ACL stored, rules listed; no real ALB in front | Enforced at edge |
+| Scale | Machine resources | Unlimited |
 
-### 11.2 Why Floci vs LocalStack
-
-| Factor | Floci | LocalStack Community |
-|---|---|---|
-| License | MIT | Restricted |
-| Auth token | None (required by LocalStack since March 2026) | Required |
-| Startup | ~24 ms | ~3.3 s |
-| Idle memory | ~13 MiB | ~143 MiB |
-| Image size | ~90 MB | ~1.0 GB |
-| Real Docker | Lambda, RDS, EKS, EC2, ECS, MSK, OpenSearch | Limited |
-| Updates | Active | Frozen |
-
-### 11.3 Storage Mode Selection Guide
-
-| Scenario | Mode | Rationale |
-|---|---|---|
-| CI test run | `memory` | Fastest, no persistence needed |
-| Daily development | `hybrid` | State survives restarts, minimal overhead |
-| Debugging data issue | `persistent` | Immediate writes, inspect state on disk |
-| Production simulation | `wal` | Maximum durability, crash recovery |
+**Why publish these?** Credibility. An emulator has limits; documenting them precisely — and designing real-AWS-correct anyway — is exactly what a senior engineer does when presenting local proofs.
 
 ---
 
-## 12. Interview Preparation Context
+## 8. Interview talking points (from this architecture)
 
-Each architecture decision maps to interview topics:
-
-- **"Why Floci instead of real AWS?"** → Cost, speed, safety, trade-off discussion
-- **"Explain your event-driven pipeline"** → S3 events → Lambda → DynamoDB → SNS; why async decoupling matters
-- **"How does your Lambda run?"** → Real Docker containers; custom images via ECR; warm pool
-- **"How would you design a VPC?"** → Subnets, route tables, IGW, NAT — provisioned via Terraform against Floci
-- **"Explain blue/green deployment"** → Two CodeDeploy groups, ELB traffic swap — demonstrated locally
-- **"How do you handle secrets?"** → Floci Secrets Manager + KMS encryption — same API as AWS
-- **"What's your CI/CD pipeline?"** → GitHub Actions + Floci CodePipeline/CodeBuild/CodeDeploy
-- **"How do you monitor applications?"** → Prometheus `/metrics` + CloudWatch Metrics/Logs + OpenSearch dashboards
-- **"How do you handle IAM?"** → Users, roles, policies, instance profiles, STS — all via Floci
-- **"What happens when your Lambda fails?"** → DLQ / retries, CloudWatch alarms, SNS alerting, runbook
+- **"Explain your event-driven pipeline"** → upload → S3 event → Lambda → DynamoDB + SNS; why decoupling matters; how failure becomes observable (`FAILED` dead-letter).
+- **"How do you deploy without downtime?"** → RollingUpdate maxSurge 1/maxUnavailable 0; canary measured in-cluster (and why `port-forward` lies on Floci — it pins to one pod).
+- **"How would you handle a spike in uploads?"** → HPA on CPU (proven 1→3→1), ASG for instances, PAY_PER_REQUEST DynamoDB, async processing as the natural buffer.
+- **"What happens when your Lambda fails?"** → `FAILED` dead-letter + error field → CloudWatch alarm → SNS; fix + replay the event (idempotent processing makes replays safe).
+- **"How do you keep IaC honest?"** → Remote state + locking, idempotent plan verified, `ignore_changes` only where emulator quirks demand, ADRs recording every deviation.
+- **"How is this different from a tutorial project?"** → It's a *system*: real k3s, real ASG replacement, real JWTs, measured RTO, 113 automated checks, a manual verification runbook, and honest documentation of every limit.
 
 ---
 
-## 13. Quick Start
+## 9. Related reading
 
-```bash
-# Start Floci
-floci start            # or: docker compose -f floci-compose.yml up -d
-eval $(floci env)
-
-# Verify
-aws s3 mb s3://imageflow-check
-
-# Provision infrastructure
-cd terraform
-terraform init
-terraform apply
-
-# Run the application (venv at the repo root)
-python -m venv .venv && source .venv/bin/activate
-pip install -r app/requirements.txt
-uvicorn app.main:app --reload
-```
+- [README.md](../README.md) — the project overview and quick start
+- [LICENSE](../LICENSE) — MIT
+- [docs/DEVELOPER.md](DEVELOPER.md) — repo map, dev loop, testing, conventions
+- [docs/roadmap.md](roadmap.md) — the 19-phase mastery roadmap
+- [docs/manual-verification.md](manual-verification.md) — run and verify every layer by hand
+- Phase write-ups: [deployment-strategies.md](deployment-strategies.md) · [monitoring.md](monitoring.md) · [security.md](security.md) · [reliability.md](reliability.md)
+- [.ai_memory/architectural_decisions.md](../.ai_memory/architectural_decisions.md) — the full ADR log
