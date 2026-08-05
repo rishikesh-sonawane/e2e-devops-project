@@ -221,6 +221,17 @@ Two orchestration targets for learning:
 > via `chaos kill-instance`); full write-up in `docs/reliability.md` (ADR-13).
 > DynamoDB scan/batch-write, s3 sync, and lambda invoke (the backup/restore +
 > retry paths) are fully live.
+>
+> **Full-system live drill (2026-08-05, PR #4 `eb20ed1`)** — every layer run
+> together on Floci caught & fixed four real issues: `chaos kill-api`'s pid was
+> the backgrounded-compound wrapper on macOS (off-by-one; `deploy.sh` now
+> resolves the real port listener via lsof/pgrep), the fail-image demo + the
+> API route both uploaded to S3 *before* writing the DynamoDB record (S3 event
+> could fire against a missing record → stuck PENDING; now record-first, with
+> rollback so a failed upload deletes its record — no zombies), and Terraform
+> showed perpetual in-place diffs from Floci normalization quirks (now
+> `ignore_changes`, plan idempotent). The whole system is reproducible by
+> hand: `docs/manual-verification.md`.
 
 ---
 
