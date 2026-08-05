@@ -6,17 +6,19 @@ from datetime import UTC, datetime
 import boto3
 
 from app.config.settings import get_settings
+from app.services.secrets import resolve_aws_credentials
 
 
 def get_ddb_client():
     """DynamoDB client pointed at the local cloud (Floci)."""
     settings = get_settings()
+    access_key, secret_key = resolve_aws_credentials()
     return boto3.client(
         "dynamodb",
         endpoint_url=settings.aws_endpoint_url,
         region_name=settings.aws_region,
-        aws_access_key_id=settings.aws_access_key_id.get_secret_value(),
-        aws_secret_access_key=settings.aws_secret_access_key.get_secret_value(),
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
     )
 
 

@@ -134,15 +134,31 @@ def get_record(client, image_id: str) -> dict | None:
 
 
 def scan_pending(client, limit: int = 50) -> list[dict]:
-    """Scan for records still in ``PENDING`` status (direct-mode trigger)."""
-    resp = client.scan(
-        TableName=METADATA_TABLE,
-        FilterExpression="#s = :pending",
-        ExpressionAttributeNames={"#s": "status"},
-        ExpressionAttributeValues={":pending": {"S": "PENDING"}},
-        Limit=limit,
-    )
-    return [_deserialize(item) for item in resp.get("Items", [])]
+    """Scan for records still in ``PENDING`` status (direct-mode trigger).
+
+    Paginates through the table so matches past the first evaluated page are
+    found: DynamoDB's ``Limit`` bounds the items *evaluated before filtering*,
+    so a single non-paginated scan silently misses PENDING records on a table
+    larger than ``limit``. The per-invocation batch guard is preserved — the
+    scan stops once ``limit`` matches are collected.
+    """
+    records: list[dict] = []
+    exclusive_start: dict | None = None
+    while len(records) < limit:
+        kwargs: dict = {
+            "TableName": METADATA_TABLE,
+            "FilterExpression": "#s = :pending",
+            "ExpressionAttributeNames": {"#s": "status"},
+            "ExpressionAttributeValues": {":pending": {"S": "PENDING"}},
+        }
+        if exclusive_start:
+            kwargs["ExclusiveStartKey"] = exclusive_start
+        resp = client.scan(**kwargs)
+        records.extend(_deserialize(item) for item in resp.get("Items", []))
+        exclusive_start = resp.get("LastEvaluatedKey")
+        if not exclusive_start:
+            break
+    return records[:limit]
 
 
 # ── SNS helpers ───────────────────────────────────────────────────────

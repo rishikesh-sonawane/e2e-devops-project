@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -49,6 +49,16 @@ class Settings(BaseSettings):
     metadata_table: str = "ImageFlowMetadata"
     sns_topic: str = "imageflow-events"
     image_processing_trigger: str = "s3"  # s3 | dynamodb | direct (ADR-07)
+
+    # ── Security (Phase 14) ────────────────────────────────────
+    # Optional Secrets Manager secret holding AWS creds
+    # ({"AWS_ACCESS_KEY_ID": ..., "AWS_SECRET_ACCESS_KEY": ...}); when set,
+    # the app resolves credentials from the secret instead of env (ADR-12).
+    # IMAGEFLOW_SECRET_NAME (project convention) + SECRET_NAME both work.
+    secret_name: str = Field(
+        default="",
+        validation_alias=AliasChoices("IMAGEFLOW_SECRET_NAME", "secret_name"),
+    )
 
     # ── Observability (Phase 13) ───────────────────────────────
     # CloudWatch custom metrics (namespace ImageFlow). Emission is ALWAYS

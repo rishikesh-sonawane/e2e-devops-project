@@ -228,6 +228,49 @@ def test_process_pending_processes_only_pending(isolated_clients) -> None:
     assert len(sns.published) == 2
 
 
+def test_scan_pending_paginates_to_find_matches(isolated_clients, monkeypatch) -> None:
+    """PENDING records past the first evaluated page must still be found.
+
+    Real DynamoDB applies ``Limit`` *before* filtering, so a non-paginated
+    scan misses matches beyond the first page. scan_pending must page through
+    with ``ExclusiveStartKey`` until it has ``limit`` matches (or the table is
+    exhausted) — otherwise a growing table silently strands images in PENDING.
+    """
+    s3, ddb, _, _cw = isolated_clients
+    data = _png()
+    _seed(s3, ddb, "img-done", data, status="PROCESSED")
+    _seed(s3, ddb, "img-late", data)  # PENDING, second in insertion order
+    _seed(s3, ddb, "img-bad", b"x")  # PENDING, third — never reached page 1
+
+    # Simulate real DynamoDB paging: one item per scan call (page size 1).
+    ordered = list(ddb.items.values())
+
+    want = "PENDING"
+
+    def paging_scan(**kwargs):
+        # Real DynamoDB pages through the raw table and applies the filter on
+        # each page server-side — mirror that here.
+        start = kwargs.get("ExclusiveStartKey")
+        idx = 0
+        if start:
+            start_id = start["image_id"]["S"]
+            idx = next(i for i, it in enumerate(ordered) if it["image_id"]["S"] == start_id) + 1
+        page = ordered[idx : idx + 1]
+        matching = [it for it in page if it.get("status", {}).get("S") == want]
+        resp: dict = {"Items": matching}
+        if idx + 1 < len(ordered):
+            resp["LastEvaluatedKey"] = {"image_id": page[0]["image_id"]}
+        return resp
+
+    monkeypatch.setattr(ddb, "scan", paging_scan)
+
+    pending = handler.scan_pending(ddb, limit=50)
+
+    ids = {r["image_id"] for r in pending}
+    assert "img-late" in ids  # found despite being past the first page
+    assert "img-done" not in ids  # filter still applies across pages
+
+
 def test_lambda_handler_processes_s3_event(isolated_clients) -> None:
     s3, ddb, _, _cw = isolated_clients
     _seed(s3, ddb, "img-ev", _png())

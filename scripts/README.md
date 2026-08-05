@@ -13,6 +13,8 @@ See `docs/roadmap.md` → Phase 4.
 | `cleanup.sh` | Safely tear down local resources | confirm (or `--yes`) → `terraform destroy` → remove `data/` artifacts |
 | `backup.sh` | Timestamped archive of project state | `tar` key dirs → `data/backups/` → verify → report size |
 | `observability.sh` | Phase 13 status report: CloudWatch metrics + alarms + EventBridge rules + log events + SNS topics | core sections (metrics/alarms) fail → exit 1 when Floci is unreachable; info sections degrade |
+| `security.sh` | Phase 14 demos: kms · secrets · cognito (full JWT flow) · waf · iam · all | per-demo; any aws failure → exit 1; unknown demo → exit 2 |
+| `security-audit.sh` | Phase 14 audit: ripgrep secret scan (fails on findings) + Floci IAM wildcard review | exit 1 when secrets found / ripgrep missing; 2 usage |
 | `lint.sh` | Run shellcheck over all scripts | requires shellcheck; exit 1 on any finding |
 
 ## Usage
