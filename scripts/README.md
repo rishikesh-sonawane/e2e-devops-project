@@ -15,6 +15,7 @@ See `docs/roadmap.md` → Phase 4.
 | `observability.sh` | Phase 13 status report: CloudWatch metrics + alarms + EventBridge rules + log events + SNS topics | core sections (metrics/alarms) fail → exit 1 when Floci is unreachable; info sections degrade |
 | `security.sh` | Phase 14 demos: kms · secrets · cognito (full JWT flow) · waf · iam · all | per-demo; any aws failure → exit 1; unknown demo → exit 2 |
 | `security-audit.sh` | Phase 14 audit: ripgrep secret scan (fails on findings) + Floci IAM wildcard review | exit 1 when secrets found / ripgrep missing; 2 usage |
+| `reliability.sh` | Phase 15 reliability drills: backup · restore · drill (RTO) · chaos (kill-pod/kill-instance/kill-api/fail-image) · scaling · reconcile [--apply] · all | per-command; any core failure → exit 1; usage → exit 2 |
 | `lint.sh` | Run shellcheck over all scripts | requires shellcheck; exit 1 on any finding |
 
 ## Usage

@@ -40,5 +40,6 @@ provider "aws" {
     secretsmanager = var.endpoint_url
     cognitoidp     = var.endpoint_url
     wafv2          = var.endpoint_url
+    autoscaling    = var.endpoint_url
   }
 }
