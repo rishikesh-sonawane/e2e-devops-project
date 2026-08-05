@@ -59,6 +59,8 @@
 
 <!-- Future sessions: append new entries below, never edit above. -->
 
+- **Phase 14 COMMITTED + PUSHED** (`555f0a0` on `feature/p14-security`, 27 files / +1378, authored by repo owner per AGENTS.md §3.6): single conventional commit including all Phase 14 work + ADR-12 + memory sync. `component-wise-architecture/` added to `.gitignore` (personal notes, consistent with the audit's existing exclusion). Branch pushed with `-u origin feature/p14-security`; GitHub suggests PR at `/pull/new/feature/p14-security`. **Next: open + squash-merge the PR (docs/source-control.md), then Phase 15 — Reliability.**
+
 ### 2026-08-05 (cont.) — Phase 14 recovery + completion
 - **CRASH RECOVERY (AGENTS.md §3.3):** new session found `feature/p14-security` with extensive uncommitted Phase 14 work on disk but `.ai_memory/` still synced to Phase 13 (previous session died before the final sync). Reconstructed from git diff + new files: `app/services/secrets.py`, `app/tests/test_secrets.py`, `scripts/security.sh`, `scripts/security-audit.sh`, `scripts/tests/test_security.sh`, `terraform/modules/security/`, `docs/security.md`, plus modified settings/metadata/storage/fakes/ci.yml/compute-module/README/roadmap/architecture/scripts-README and a Lambda `scan_pending` pagination fix.
 - **Full validation re-run (all green):** pytest **52 passed** (35 app incl. 8 secrets tests + 17 lambda incl. pagination test), ruff clean, shellcheck clean (`scripts/lint.sh`), **41 script tests** (8 security + 7 observability + 29 earlier), terraform validate + fmt clean.
