@@ -156,6 +156,7 @@ curl -s -F "file=@photo.jpg" http://localhost:8000/api/v1/images
 | [docs/monitoring.md](docs/monitoring.md) | Prometheus + CloudWatch: metrics, logs, alarms, SLI/SLO thinking |
 | [docs/security.md](docs/security.md) | KMS, Secrets Manager, Cognito, WAF, IAM, CI gates, threat model |
 | [docs/reliability.md](docs/reliability.md) | RTO/RPO drills, chaos engineering, auto-scaling reconcilers |
+| [docs/ai-assisted-development.md](docs/ai-assisted-development.md) | Candid retrospective: what went wrong, where a human was irreplaceable, the AI-dev playbook |
 | [docs/manual-verification.md](docs/manual-verification.md) | Run the whole system by hand and verify every layer |
 | [AGENTS.md](AGENTS.md) | How AI assistants operate in this repo (memory sync, ADRs, safety rules) |
 
