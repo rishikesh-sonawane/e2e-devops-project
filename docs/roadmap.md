@@ -206,7 +206,7 @@ Interview Topics: deployment failures, rollback strategy, release validation.
 
 ---
 
-## Phase 13 — Monitoring & Observability
+## Phase 13 — Monitoring & Observability ✅ (complete)
 
 Master: metrics, logs, tracing, dashboards, alerting, SLI, SLO, error budgets.
 
@@ -215,6 +215,14 @@ Build:
 - Infrastructure monitoring: Floci CloudWatch + OpenSearch (real engine)
 - Alerting: CloudWatch Alarms → EventBridge / SNS
 - Incident dashboards: OpenSearch + floci-ui
+
+> **Complete ✅ (ADR-11)** — the CloudWatch-only stack is **live and probe-verified** against Floci:
+> - **Prometheus `/metrics`** — now ships pipeline counters + histogram: `imageflow_uploads_total`, `imageflow_upload_errors_total`, `imageflow_upload_duration_seconds` (plus existing HTTP/uptime metrics).
+> - **CloudWatch custom metrics** (namespace `ImageFlow`) — the API emits `Uploads`/`UploadErrors`; the Lambda emits `ProcessedCount`/`FailedCount` (`put_metric_data` verified: list-metrics + get-metric-statistics return datapoints).
+> - **CloudWatch Logs** — optional `CloudWatchLogHandler` ships API log lines to `/imageflow/api` when `CLOUDWATCH_LOGS_ENABLED=true` (create-group/stream + put-log-events verified).
+> - **Alerting** — Terraform `observability` module: alarms `imageflow-failed-images` + `imageflow-upload-errors` → SNS, plus EventBridge rule `imageflow-alarm-events` (alarm state changes → SNS). Floci stores alarm state but **not** `AlarmActions` (probe-verified) — alarms stay real-AWS-correct; the demonstrable alert path is EventBridge → SNS (persists).
+> - **Observability script** — `scripts/observability.sh` (metrics + alarms + rules + logs + topics report) with deterministic behavior tests via a fake `aws` CLI.
+> - Full write-up + demo runbook + SLI/SLO table: `docs/monitoring.md`. **OpenSearch deliberately excluded** (heavyweight real container; CloudWatch-only covers the story in-process — ADR-11).
 
 Interview Topics: Golden Signals, RED, USE, MTTR.
 

@@ -20,6 +20,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, generate_late
 
 from app.config.settings import get_settings
 from app.routes import images
+from app.services.observability import CloudWatchLogHandler
 
 settings = get_settings()
 
@@ -28,6 +29,14 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 logger = logging.getLogger("imageflow")
+
+# Optional CloudWatch Logs sink (CLOUDWATCH_LOGS_ENABLED=true) — non-fatal,
+# ships the same lines that go to stdout (Phase 13, ADR-11).
+if settings.cloudwatch_logs_enabled:
+    cw_handler = CloudWatchLogHandler()
+    cw_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+    logging.getLogger().addHandler(cw_handler)
+    logger.info("cloudwatch logs enabled → group %s", settings.cloudwatch_log_group)
 
 APP_STARTED_AT = time.time()
 

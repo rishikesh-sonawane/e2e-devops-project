@@ -12,6 +12,7 @@ See `docs/roadmap.md` → Phase 4.
 | `health-check.sh` | Verify API `/health` + Floci cloud are alive | GET `/health` (must say `status=ok`) + Floci HTTP reachability → per-service report → exit 0/1 |
 | `cleanup.sh` | Safely tear down local resources | confirm (or `--yes`) → `terraform destroy` → remove `data/` artifacts |
 | `backup.sh` | Timestamped archive of project state | `tar` key dirs → `data/backups/` → verify → report size |
+| `observability.sh` | Phase 13 status report: CloudWatch metrics + alarms + EventBridge rules + log events + SNS topics | core sections (metrics/alarms) fail → exit 1 when Floci is unreachable; info sections degrade |
 | `lint.sh` | Run shellcheck over all scripts | requires shellcheck; exit 1 on any finding |
 
 ## Usage

@@ -168,10 +168,19 @@ Two orchestration targets for learning:
 |---|---|---|
 | Metrics | Floci CloudWatch Metrics | Application + infrastructure |
 | Logs | Floci CloudWatch Logs | API stdout + Lambda + container logs |
-| Search | Floci OpenSearch (real engine) | Log aggregation and dashboards |
+| Search | Floci OpenSearch (real engine) | Log aggregation and dashboards *(not part of the Phase 13 CloudWatch-only delivery — ADR-11)* |
 | Alerts | Floci CloudWatch Alarms → EventBridge / SNS | Threshold-based alerting |
 | Dashboard | floci-ui (`localhost:3000`) | Visual resource browser |
 | App metrics | Prometheus-format `/metrics` | Upload count, processing latency, failure rate |
+
+> **Phase 13 delivered:** the API emits Prometheus pipeline metrics
+> (`imageflow_uploads_total`, `imageflow_upload_errors_total`,
+> `imageflow_upload_duration_seconds`) and CloudWatch custom metrics
+> (namespace `ImageFlow`); the Lambda emits `ProcessedCount`/`FailedCount`;
+> an optional CloudWatchLogHandler ships API logs to `/imageflow/api`; the
+> Terraform `observability` module provisions alarms (`imageflow-failed-images`,
+> `imageflow-upload-errors`) + an EventBridge rule → SNS. Full details:
+> `docs/monitoring.md` · probe `./scripts/observability.sh`.
 
 ### 3.8 Security
 

@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.tests.fakes import FakeDDB, FakeS3
+from app.tests.fakes import FakeCloudWatch, FakeDDB, FakeS3
 
 client = TestClient(app)
 
@@ -20,14 +20,17 @@ PNG_1X1 = base64.b64decode(
 def fake_cloud():
     fake_s3 = FakeS3()
     fake_ddb = FakeDDB()
+    fake_cw = FakeCloudWatch()
     with patch("app.services.storage.get_s3_client", return_value=fake_s3), patch(
         "app.services.metadata.get_ddb_client", return_value=fake_ddb
+    ), patch(
+        "app.services.observability.get_cloudwatch_client", return_value=fake_cw
     ):
-        yield fake_s3, fake_ddb
+        yield fake_s3, fake_ddb, fake_cw
 
 
 def test_upload_creates_pending_record(fake_cloud) -> None:
-    fake_s3, fake_ddb = fake_cloud
+    fake_s3, fake_ddb, _cw = fake_cloud
     resp = client.post(
         "/api/v1/images", files={"file": ("photo.png", PNG_1X1, "image/png")}
     )

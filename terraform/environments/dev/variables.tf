@@ -37,3 +37,8 @@ variable "processor_image_tag" {
   type    = string
   default = "latest"
 }
+
+variable "environment" {
+  type    = string
+  default = "dev"
+}

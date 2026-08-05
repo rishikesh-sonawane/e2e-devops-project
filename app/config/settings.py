@@ -50,6 +50,16 @@ class Settings(BaseSettings):
     sns_topic: str = "imageflow-events"
     image_processing_trigger: str = "s3"  # s3 | dynamodb | direct (ADR-07)
 
+    # ── Observability (Phase 13) ───────────────────────────────
+    # CloudWatch custom metrics (namespace ImageFlow). Emission is ALWAYS
+    # non-fatal: observability must never break the pipeline (ADR-11).
+    cloudwatch_namespace: str = "ImageFlow"
+    cloudwatch_metrics_enabled: bool = True
+    # Optional CloudWatch Logs shipping of API log lines (off by default —
+    # stdout stays the primary sink; enabled via CLOUDWATCH_LOGS_ENABLED).
+    cloudwatch_logs_enabled: bool = False
+    cloudwatch_log_group: str = "/imageflow/api"
+
     def safe_config(self) -> dict[str, str]:
         """Non-secret config dump for the `/config` endpoint.
 

@@ -152,6 +152,24 @@ def ensure_topic(client) -> str:
     return client.create_topic(Name=SNS_TOPIC)["TopicArn"]
 
 
+# ── CloudWatch metrics (Phase 13, ADR-11) ─────────────────────────────
+# The Lambda owns the pipeline's outcome metrics: ProcessedCount / FailedCount
+# (the API owns Uploads / UploadErrors). Emission is ALWAYS non-fatal — a
+# CloudWatch outage must never break image processing.
+CW_NAMESPACE = "ImageFlow"
+
+
+def _emit_metric(name: str, value: float) -> None:
+    """Put one datapoint into the ImageFlow CloudWatch namespace."""
+    try:
+        _client("cloudwatch").put_metric_data(
+            Namespace=CW_NAMESPACE,
+            MetricData=[{"MetricName": name, "Value": value, "Unit": "Count"}],
+        )
+    except Exception as exc:  # noqa: BLE001 — observability must be non-fatal
+        logger.debug("cloudwatch put_metric_data(%s) failed: %s", name, exc)
+
+
 def publish_event(client, image_id: str, payload: dict) -> str:
     """Publish an event to the SNS topic; returns the MessageId."""
     topic_arn = ensure_topic(client)
@@ -235,6 +253,7 @@ def process_image(image_id: str) -> dict:
             "processed_at": result["processed_at"],
         },
     )
+    _emit_metric("ProcessedCount", 1)
     logger.info(
         "image %s: PROCESSED (%s %sx%s)", image_id, meta["format"], meta["width"], meta["height"]
     )
@@ -252,6 +271,7 @@ def _fail(ddb, record: dict, reason: str) -> dict:
         }
     )
     _put_record(ddb, updated)
+    _emit_metric("FailedCount", 1)
     logger.error("image %s: FAILED — %s", record.get("image_id"), reason)
     return {"image_id": record.get("image_id"), "status": "FAILED", "reason": reason}
 

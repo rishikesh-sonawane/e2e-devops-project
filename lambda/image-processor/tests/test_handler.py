@@ -18,7 +18,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import handler  # noqa: E402
-from fakes import FakeDDB, FakeS3, FakeSNS  # noqa: E402
+from fakes import FakeCloudWatch, FakeDDB, FakeS3, FakeSNS  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -26,8 +26,9 @@ def isolated_clients(monkeypatch):
     """Fresh fake AWS clients + clean module state for every test."""
     monkeypatch.setattr(handler, "_clients", {})
     s3, ddb, sns = FakeS3(), FakeDDB(), FakeSNS()
-    handler._clients.update({"s3": s3, "dynamodb": ddb, "sns": sns})
-    return s3, ddb, sns
+    cw = FakeCloudWatch()
+    handler._clients.update({"s3": s3, "dynamodb": ddb, "sns": sns, "cloudwatch": cw})
+    return s3, ddb, sns, cw
 
 
 def _png(width: int = 300, height: int = 200) -> bytes:
@@ -91,7 +92,7 @@ def test_parse_s3_event_ignores_non_uploads_keys() -> None:
 # ── Happy path ────────────────────────────────────────────────────────
 
 def test_process_image_happy_path(isolated_clients) -> None:
-    s3, ddb, sns = isolated_clients
+    s3, ddb, sns, cw = isolated_clients
     data = _png(300, 200)
     _seed(s3, ddb, "img-1", data)
 
@@ -125,9 +126,16 @@ def test_process_image_happy_path(isolated_clients) -> None:
     assert payload["event"] == "image.processed"
     assert payload["format"] == "PNG"
 
+    # Exactly one CloudWatch datapoint: ProcessedCount in the ImageFlow namespace.
+    assert len(cw.datapoints) == 1
+    cw_call = cw.datapoints[0]
+    assert cw_call["Namespace"] == "ImageFlow"
+    assert cw_call["MetricData"][0]["MetricName"] == "ProcessedCount"
+    assert cw_call["MetricData"][0]["Value"] == 1
+
 
 def test_thumbnail_preserves_aspect_ratio_and_caps_at_256(isolated_clients) -> None:
-    s3, ddb, _ = isolated_clients
+    s3, ddb, _, _cw = isolated_clients
     data = _png(800, 400)  # 2:1
     _seed(s3, ddb, "img-wide", data)
 
@@ -142,7 +150,7 @@ def test_thumbnail_preserves_aspect_ratio_and_caps_at_256(isolated_clients) -> N
 # ── Failure paths ─────────────────────────────────────────────────────
 
 def test_process_image_fails_on_non_image(isolated_clients) -> None:
-    s3, ddb, sns = isolated_clients
+    s3, ddb, sns, cw = isolated_clients
     _seed(s3, ddb, "img-bad", b"this is definitely not an image")
 
     result = handler.process_image("img-bad")
@@ -152,10 +160,13 @@ def test_process_image_fails_on_non_image(isolated_clients) -> None:
     assert "error" in ddb.items["img-bad"]
     assert "imageflow-thumbs" not in s3.objects
     assert sns.published == []
+    # The failure is observable in CloudWatch too.
+    assert len(cw.datapoints) == 1
+    assert cw.datapoints[0]["MetricData"][0]["MetricName"] == "FailedCount"
 
 
 def test_process_image_fails_when_s3_object_missing(isolated_clients) -> None:
-    _, ddb, _ = isolated_clients
+    _, ddb, _, _cw = isolated_clients
     _seed(s3=None, ddb=ddb, image_id="img-gone", data=None)
 
     result = handler.process_image("img-gone")
@@ -165,7 +176,7 @@ def test_process_image_fails_when_s3_object_missing(isolated_clients) -> None:
 
 
 def test_process_image_fails_on_missing_original_key(isolated_clients) -> None:
-    s3, ddb, _ = isolated_clients
+    s3, ddb, _, _cw = isolated_clients
     record = _typed_record("img-nokey")
     record.pop("original_key")
     ddb.put_item(TableName="ImageFlowMetadata", Item=record)
@@ -183,7 +194,7 @@ def test_process_image_fails_on_missing_original_key(isolated_clients) -> None:
 # ── Idempotency / edge cases ─────────────────────────────────────────
 
 def test_process_image_skips_already_processed(isolated_clients) -> None:
-    s3, ddb, sns = isolated_clients
+    s3, ddb, sns, _cw = isolated_clients
     _seed(s3, ddb, "img-done", _png(), status="PROCESSED")
 
     result = handler.process_image("img-done")
@@ -201,7 +212,7 @@ def test_process_image_skips_missing_record(isolated_clients) -> None:
 
 
 def test_process_pending_processes_only_pending(isolated_clients) -> None:
-    s3, ddb, sns = isolated_clients
+    s3, ddb, sns, _cw = isolated_clients
     data = _png()
     _seed(s3, ddb, "img-p1", data)
     _seed(s3, ddb, "img-p2", data)
@@ -218,7 +229,7 @@ def test_process_pending_processes_only_pending(isolated_clients) -> None:
 
 
 def test_lambda_handler_processes_s3_event(isolated_clients) -> None:
-    s3, ddb, _ = isolated_clients
+    s3, ddb, _, _cw = isolated_clients
     _seed(s3, ddb, "img-ev", _png())
 
     response = handler.lambda_handler(
@@ -232,7 +243,7 @@ def test_lambda_handler_processes_s3_event(isolated_clients) -> None:
 
 def test_size_keeps_numeric_type_after_processing(isolated_clients) -> None:
     """The get→merge→put round trip must not flip `size` from N to S."""
-    s3, ddb, _ = isolated_clients
+    s3, ddb, _, _cw = isolated_clients
     _seed(s3, ddb, "img-size", _png())
 
     handler.process_image("img-size")
@@ -240,9 +251,27 @@ def test_size_keeps_numeric_type_after_processing(isolated_clients) -> None:
     assert ddb.items["img-size"]["size"]["N"] == "123"
 
 
+def test_metric_emission_failure_is_non_fatal(isolated_clients, monkeypatch) -> None:
+    """A CloudWatch outage must never break image processing (ADR-11)."""
+    s3, ddb, sns, cw = isolated_clients
+    data = _png()
+    _seed(s3, ddb, "img-cwdown", data)
+
+    def _boom(self, **kwargs):
+        raise RuntimeError("cloudwatch down")
+
+    monkeypatch.setattr(cw, "put_metric_data", _boom)
+
+    result = handler.process_image("img-cwdown")
+
+    assert result["status"] == "PROCESSED"  # pipeline unaffected
+    assert ddb.items["img-cwdown"]["status"]["S"] == "PROCESSED"
+    assert len(sns.published) == 1
+
+
 def test_process_pending_continues_after_failure(isolated_clients, monkeypatch) -> None:
     """One raising image must not abort the rest of the batch."""
-    s3, ddb, _ = isolated_clients
+    s3, ddb, _, _cw = isolated_clients
     data = _png()
     _seed(s3, ddb, "img-ok1", data)
     _seed(s3, ddb, "img-ok2", data)

@@ -88,17 +88,17 @@ resource "aws_iam_policy" "processor" {
         Resource = var.metadata_table_arn
       },
       {
-        Sid    = "SNSPublish"
-        Effect = "Allow"
-        Action = ["sns:Publish"]
+        Sid      = "SNSPublish"
+        Effect   = "Allow"
+        Action   = ["sns:Publish"]
         Resource = var.sns_topic_arn
       },
       # CreateTopic cannot be scoped to a pre-existing ARN (the topic is created
       # by name), so it needs the wildcard — Publish above stays tight.
       {
-        Sid    = "SNSCreateTopic"
-        Effect = "Allow"
-        Action = ["sns:CreateTopic"]
+        Sid      = "SNSCreateTopic"
+        Effect   = "Allow"
+        Action   = ["sns:CreateTopic"]
         Resource = ["*"]
       },
       {
@@ -109,6 +109,15 @@ resource "aws_iam_policy" "processor" {
           "logs:CreateLogStream",
           "logs:PutLogEvents",
         ]
+        Resource = ["*"]
+      },
+      # Phase 13: the Lambda emits ProcessedCount/FailedCount. PutMetricData
+      # is namespace-scoped, not ARN-scoped — the wildcard is the AWS-correct
+      # shape (real AWS docs: put_metric_data requires Resource: "*").
+      {
+        Sid      = "CloudWatchPutMetrics"
+        Effect   = "Allow"
+        Action   = ["cloudwatch:PutMetricData"]
         Resource = ["*"]
       },
     ]

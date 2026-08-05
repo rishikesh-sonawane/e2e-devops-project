@@ -22,6 +22,28 @@ class FakeS3:
         return f"https://presigned/{Params['Bucket']}/{Params['Key']}?expires={ExpiresIn}"
 
 
+class FakeCloudWatch:
+    """Captures CloudWatch calls (Phase 13 metrics + logs)."""
+
+    def __init__(self) -> None:
+        self.datapoints: list[dict] = []
+        self.log_events: list[dict] = []
+
+    def put_metric_data(self, **kwargs) -> dict:
+        self.datapoints.append(kwargs)
+        return {}
+
+    def create_log_group(self, **kwargs) -> None:
+        self.log_groups = getattr(self, "log_groups", set()) | {kwargs["logGroupName"]}
+
+    def create_log_stream(self, **kwargs) -> None:
+        self.log_streams = getattr(self, "log_streams", set()) | {kwargs["logStreamName"]}
+
+    def put_log_events(self, **kwargs) -> dict:
+        self.log_events.append(kwargs)
+        return {"nextSequenceToken": "tok-1"}
+
+
 class FakeDDB:
     def __init__(self) -> None:
         self.tables: set[str] = set()

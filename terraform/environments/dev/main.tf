@@ -30,5 +30,14 @@ module "compute" {
   sns_topic_arn      = module.messaging.topic_arn
 }
 
+# Observability (Phase 13): CloudWatch alarms + EventBridge → SNS alerting
+# on the ImageFlow custom metrics (Uploads/UploadErrors from the API,
+# ProcessedCount/FailedCount from the Lambda).
+module "observability" {
+  source      = "../../modules/observability"
+  topic_arn   = module.messaging.topic_arn
+  environment = var.environment
+}
+
 # The notification depends on the Lambda existing (module graph handles it),
 # but storage's notification references compute's arn — fine as-is.

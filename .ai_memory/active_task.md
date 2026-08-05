@@ -1,7 +1,7 @@
 # Active Task State
 
 ## Current Focus
-**Phase 12 — Deployment Strategies COMPLETE** (`6397127`): rolling update, rollback, canary, and blue/green all **proven live on Floci EKS (real k3s)** with measured traffic splits (canary 38/42 at 3+3, blue/green 20/20 atomic flips). Chart now ships an explicit RollingUpdate strategy (maxSurge 1 / maxUnavailable 0); `k8s/demo/{canary,blue-green}.yaml` + `scripts/demo-deploy-strategies.sh` (reproducible) + `docs/deployment-strategies.md` (incl. Floci CodeDeploy simulation caveat). **Next: monitoring (CloudWatch/OpenSearch) + security (IAM/KMS/Secrets) phases.**
+**Phase 13 — Monitoring & Observability COMPLETE** (`feature/p13-monitoring`, commits pending push): three observability planes live on Floci — Prometheus `/metrics` pipeline counters/histogram, CloudWatch custom metrics (ImageFlow namespace: API Uploads/UploadErrors + Lambda ProcessedCount/FailedCount), optional CloudWatch Logs handler (`/imageflow/api`, background flusher), and Terraform alarm + EventBridge→SNS alerting (live-applied). `scripts/observability.sh` report + `docs/monitoring.md` write-up (SLI/SLO + runbook). Floci findings logged in ADR-11 (alarm actions not persisted; logs = separate boto3 service; background flusher required). 42 pytest + 33 script tests green. **Next: Phase 14 — Security hardening (IAM/KMS/Secrets/Cognito/WAF) per docs/roadmap.md.**
 
 ## Immediate Next Steps
 
@@ -20,7 +20,7 @@
 12. [x] **Phase 11 — Helm chart + Floci EKS (real k3s)** deployed (`51661a5`): pod Running, /health ok, upload via cluster → auto Lambda → PROCESSED; HPA live; known node-DNS quirk documented.
 13. [x] Phase 7/8 finish — **inner-loop CI/CD LIVE** (`69fe882`): CodePipeline → CodeBuild (buildspec: ruff+pytest → Kaniko build+push) → CodeDeploy (`imageflow-onprem`, auto-rollback) end-to-end Succeeded; GitHub Actions deploy.yml + release.yml; setup-inner-loop.sh; ADR-10 deviation log (Kaniko).
 14. [x] **Phase 12 — Deployment Strategies COMPLETE** (`6397127`): rolling (v2, 3 replicas, explicit strategy) → rollback (broken image → CrashLoop → `rollout undo` → v2 restored, revision trail) → canary (v3 slice, 38/42 split at 3+3 via in-cluster ClusterIP — port-forward pins on Floci) → blue/green (20/20 atomic selector flips + flip-back rollback). Chart strategy block, k8s/demo manifests, docs/deployment-strategies.md, scripts/demo-deploy-strategies.sh. **Floci CodeDeploy cannot do real blue/green/canary (simulated lifecycle) — Kubernetes strategies are the genuine demos.**
-15. [ ] Monitoring (CloudWatch/OpenSearch), security (IAM/KMS/Secrets), troubleshooting lab (see docs/roadmap.md).
+15. [x] **Phase 13 — Monitoring & Observability COMPLETE**: Prometheus pipeline metrics + CloudWatch custom metrics (API+Lambda) + optional CloudWatch Logs handler + Terraform alarms/EventBridge→SNS alerting, all live-verified on Floci; `scripts/observability.sh` + `docs/monitoring.md` + ADR-11. **Next: Phase 14 — Security (IAM/KMS/Secrets/Cognito/WAF), then reliability (15), GitOps (16), troubleshooting lab (17).**
 
 
 ## Blockers / Risks

@@ -61,3 +61,14 @@ class FakeSNS:
     def publish(self, **kwargs) -> dict:
         self.published.append(kwargs)
         return {"MessageId": f"msg-{len(self.published)}"}
+
+
+class FakeCloudWatch:
+    """Captures put_metric_data calls for the Phase 13 metric-emission tests."""
+
+    def __init__(self) -> None:
+        self.datapoints: list[dict] = []
+
+    def put_metric_data(self, **kwargs) -> dict:
+        self.datapoints.append(kwargs)
+        return {}

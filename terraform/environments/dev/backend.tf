@@ -21,8 +21,8 @@ terraform {
     skip_region_validation      = true
     use_path_style              = true
     endpoints = {
-      s3        = "http://localhost:4566"
-      dynamodb  = "http://localhost:4566"
+      s3       = "http://localhost:4566"
+      dynamodb = "http://localhost:4566"
     }
   }
 }

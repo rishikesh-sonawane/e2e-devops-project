@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import logging
+import time
 import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.config.settings import get_settings
-from app.services import metadata, storage
+from app.services import metadata, observability, storage
 
 logger = logging.getLogger("imageflow")
 
@@ -57,8 +58,9 @@ async def upload_image(file: UploadFile = File(...)) -> dict:  # noqa: B008 — 
         _ensure_cloud()
         s3 = storage.get_s3_client()
         ddb = metadata.get_ddb_client()
+        start = time.perf_counter()
         original_key = storage.upload_original(s3, image_id, filename, data, content_type)
-        return metadata.create_record(
+        record = metadata.create_record(
             ddb,
             image_id,
             filename=filename,
@@ -66,9 +68,15 @@ async def upload_image(file: UploadFile = File(...)) -> dict:  # noqa: B008 — 
             size=len(data),
             original_key=original_key,
         )
+        observability.UPLOAD_DURATION_SECONDS.observe(time.perf_counter() - start)
+        observability.UPLOADS_TOTAL.inc()
+        observability.emit_upload()
+        return record
     except HTTPException:
         raise
     except Exception as exc:
+        observability.UPLOAD_ERRORS_TOTAL.inc()
+        observability.emit_upload_error()
         raise _cloud_unavailable() from exc
 
 
