@@ -1,9 +1,9 @@
 # Active Task State
 
 ## Current Focus
-**PORTFOLIO DOCS DONE — PR #7 merged `6c1be72`:** README rewritten (badges, curriculum table, architecture diagram, surface table, quality gates, 60s quick start), docs/architecture.md rewritten (first-principles → 3 core decisions → logical/layered/deployment views → components → data model → ADR table → honest Floci limits → interview points), docs/DEVELOPER.md new (repo map, dev loop, testing matrix, CI/CD, conventions, worked example, troubleshooting, DoD), LICENSE (MIT) added, GitHub repo description + 16 topics set. Reviewer-verified facts: 54 tests (36+17+1), 59 script tests/7 suites, 7 modules, 18 scripts, 19 phases. All real links resolve.
+**GITHUB PAGES DOCS SITE LIVE — PR #8 merged `a9387d7`:** MkDocs + Material theme docs portal (mkdocs.yml, docs/index.md, requirements-docs.txt, .github/workflows/pages.yml) deployed to **https://rishikesh-sonawane.github.io/e2e-devops-project/** — all 11 pages verified HTTP 200, search index works, dark-mode toggle present, Material CSS loaded. Strict build passes (`mkdocs build --strict`); fixed ../ links in architecture.md + setup.md for site-friendliness. Workflow name is `pages.yml` (display name "docs-site"). README badge + docs-table row added; `site/` gitignored.
 
-Prior this week: manual runbook walk-through (PR #6 `abb9308` — setup-inner-loop idempotency + pytest count 54), docs update (PR #5 `704dc22`), live drill + 4 fixes (PR #4 `eb20ed1`), runbook (PR #3 `5a88bf1`). Main clean at `6c1be72`. **Next: Phase 16 — GitOps (Flux/ArgoCD-style declarative sync on the k3s cluster).**
+Prior: portfolio docs (PR #7 `6c1be72` — README/architecture rewrite, DEVELOPER.md, MIT LICENSE, repo description + 16 topics), manual runbook walk-through (PR #6 `abb9308`), docs update (PR #5 `704dc22`), live drill + 4 fixes (PR #4 `eb20ed1`), runbook (PR #3 `5a88bf1`). Main clean. **Next: Phase 16 — GitOps (Flux/ArgoCD-style declarative sync on the k3s cluster).**
 
 ---
 
