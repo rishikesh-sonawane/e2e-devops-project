@@ -1,143 +1,207 @@
-# ImageFlow — The DevOps Operating System
+# 🚀 ImageFlow — The DevOps Operating System
 
-> A single repository that grows with you from an empty folder to a production-inspired platform engineering portfolio — built **100% locally, 100% free**, on [Floci](https://floci.io), the MIT-licensed AWS emulator.
+> **A production-inspired platform engineering project — built end-to-end on your own laptop, for $0.**  
+> An event-driven image pipeline wrapped in *everything* a real DevOps platform needs: Terraform infrastructure, a real Kubernetes cluster, dual-loop CI/CD, observability, security hardening, and reliability engineering — all verified live, all documented, all free.
 
 [![CI](https://github.com/rishikesh-sonawane/e2e-devops-project/actions/workflows/ci.yml/badge.svg)](https://github.com/rishikesh-sonawane/e2e-devops-project/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-54%20pytest%20%2B%2059%20script-green)](tests/)
+[![Security](https://img.shields.io/badge/security-pip--audit%20%7C%20gitleaks%20%7C%20trivy-blue)]()
+[![IaC](https://img.shields.io/badge/IaC-Terraform-purple)]()
+[![Orchestration](https://img.shields.io/badge/Orchestration-Kubernetes%20%2B%20Helm-326CE5)]()
+[![Cost](https://img.shields.io/badge/cost-%240.00%2Fmonth-brightgreen)]()
+[![License](https://img.shields.io/badge/license-MIT-orange)]()
 
 ---
 
-## The Vision
+## 🎯 Why this project exists
 
-**ImageFlow** is not just an application. It is a **DevOps Operating System**: a learning environment and portfolio asset where every phase of modern platform engineering — application development, containerization, CI/CD, infrastructure as code, cloud provisioning, orchestration, deployment strategies, monitoring, security, reliability, and GitOps — is built, operated, and troubleshot **on your own machine for free**.
+**ImageFlow is not just an application — it is a *DevOps Operating System*:** a learning environment and portfolio asset where every discipline of modern platform engineering is built, operated, broken, fixed, and documented — on your own machine, forever free.
 
-The repository is a live, interview-ready artifact. By the end, you can walk into any AWS DevOps / Platform Engineering interview and say:
+- **19 phases** of a mastery roadmap — from Git fundamentals to deployment strategies, security, reliability engineering, and GitOps
+- **Real cloud services, not mock theater** — Floci (the MIT-licensed AWS emulator) runs actual Docker containers: a **real k3s Kubernetes cluster**, **real Lambda functions**, a **real container registry**, **real EC2 auto-scaling**
+- **The same professional tooling** — AWS CLI, boto3, Terraform, Helm, kubectl, GitHub Actions, CodePipeline/CodeBuild/CodeDeploy — all working unchanged against `localhost:4566`
+- **$0 forever** — no cloud account, no credit card, no bills, no blast radius. A mistake costs nothing but a retry.
 
-> *"I built it, I understand it, and I can troubleshoot it."*
+> ### The mission statement
+> ```text
+> "I built it, I understand it, and I can troubleshoot it."
+> ```
+> That's the sentence every phase of this project is working toward — the honest, demonstrable claim of a real platform engineer.
 
-## The 5 Core Principles
+---
 
-1. **Zero-cost, local-first** — Every AWS service runs inside Floci on `localhost:4566`. No cloud account, no auth tokens, no feature gates, no bills. Ever.
-2. **Real fidelity, not mock theater** — Lambda, RDS, EKS (real k3s), ECS, EC2, ElastiCache, MSK, OpenSearch, and CodeBuild run as **real Docker containers**. Code verified locally behaves the same in production.
-3. **Interview-driven** — Each roadmap phase requires theory, hands-on implementation, troubleshooting, security, and documentation before you move on.
-4. **Documentation-first** — Architecture, roadmap, setup guides, and architectural decision records (ADRs) live in the repo.
-5. **Memory-persistent AI collaboration** — Freebuff (with optional OpenCode Zen between sessions) stays contextually aligned across fresh sessions via the `.ai_memory/` bank and sync protocol.
+## 🧠 What you'll learn here (if you're an aspiring DevOps engineer)
 
-## ImageFlow at a Glance
+This repository is a **free, self-contained DevOps curriculum** with a working system at the end of every phase. Follow the [19-phase roadmap](docs/roadmap.md) and you'll build, in order:
 
-An **event-driven image pipeline**: upload → store → process → notify → retrieve.
+| Discipline | What you'll master | Where |
+|---|---|---|
+| 🐧 **Fundamentals** | Git, Linux, Python, Bash scripting, shellcheck-grade automation | [docs/roadmap.md](docs/roadmap.md) Phases 1–6 |
+| 🐳 **Containerization** | Multi-stage non-root Docker builds, image hygiene, `.dockerignore` | [Dockerfile](Dockerfile) |
+| 🔁 **CI/CD** | GitHub Actions (outer loop) **+** CodePipeline→CodeBuild→CodeDeploy (inner loop), daemonless **Kaniko** builds, auto-rollback | [`.github/workflows/`](.github/workflows/), [docs/setup.md](docs/setup.md) |
+| 🧱 **Infrastructure as Code** | Terraform modules, remote state + locking, idempotent plans | [terraform/](terraform/) |
+| ☸️ **Orchestration** | Real Kubernetes (k3s), Helm charts, HPA, rolling/rollback/canary/blue-green **proven live** | [helm/imageflow](helm/imageflow), [docs/deployment-strategies.md](docs/deployment-strategies.md) |
+| 📊 **Observability** | Prometheus metrics, CloudWatch metrics/logs/alarms, EventBridge alerting, SLI/SLO thinking | [docs/monitoring.md](docs/monitoring.md) |
+| 🔐 **Security** | KMS, Secrets Manager, Cognito JWT auth, WAF v2, least-privilege IAM, dependency/image scanning in CI | [docs/security.md](docs/security.md) |
+| 🛡️ **Reliability** | Backup/restore drills with **measured RTO/RPO**, chaos engineering, auto-scaling reconcilers | [docs/reliability.md](docs/reliability.md) |
+
+**Every phase is graded by the same bar:** *explain it, implement it, troubleshoot it, defend it* — and the repo ships a [manual verification runbook](docs/manual-verification.md) so you (or an interviewer) can watch each layer work live.
+
+---
+
+## 🏗️ The architecture at a glance
 
 ```
-                ┌──────────────┐         ┌───────────────────────────────────────────┐
-  browser/curl  │  ImageFlow    │         │                Floci :4566                  │
-   ───────────► │  API (FastAPI)│         │  S3 (originals + thumbnails)               │
-                └──────┬───────┘         │  DynamoDB (metadata index)                  │
-                       │ multipart       │  Lambda image-processor (real Docker,       │
-                       ▼ upload          │    Pillow: thumbnail + metadata extraction) │
-   ┌──────────────────────────────┐      │  SNS (image.processed events)               │
-   │  S3 event notification        │────►│  API Gateway · IAM · CloudWatch             │
-   └──────────────────────────────┘      │  EKS (k3s) · ECS · ECR · CodePipeline       │
-                                         └───────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                          Local Development Machine                       │
+│                                                                          │
+│  ┌───────────────────┐        ┌──────────────────────────────────────┐  │
+│  │   ImageFlow API    │        │           Floci (:4566)              │  │
+│  │    (FastAPI)       │        │   THE LOCAL CLOUD — AWS emulator     │  │
+│  │                    │        │  ┌────────────────────────────────┐  │  │
+│  │  /health /version  │        │  │  S3        (file warehouse)    │  │  │
+│  │  /metrics /config  │        │  │  DynamoDB  (fast catalogue)    │  │  │
+│  │  /api/v1/images    │        │  │  Lambda    (REAL docker worker) │  │  │
+│  └────────┬──────────┘        │  │  SNS       (event loudspeaker)  │  │  │
+│           │  multipart upload │  │  EKS       (REAL k3s cluster)   │  │  │
+│           ▼                   │  │  ECR       (REAL registry)      │  │  │
+│  ┌───────────────────┐        │  │  EC2/ASG   (REAL auto-scaling)  │  │  │
+│  │  S3 event          │──────▶│  │  KMS · Secrets · Cognito · WAF  │  │  │
+│  │  notification      │        │  │  CloudWatch · CodePipeline ·   │  │  │
+│  └───────────────────┘        │  │  CodeBuild · CodeDeploy         │  │  │
+│                               │  └────────────────────────────────┘  │  │
+│  IaC: Terraform (state in S3 + DDB locking)      CI/CD: dual-loop      │  │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Processing flow**
+### The pipeline in one breath
 
-1. Client uploads an image → `POST /api/v1/images` → FastAPI stores the original in **S3** and writes a `PENDING` record to **DynamoDB**.
-2. An **S3 event notification** triggers the **Lambda** `image-processor` — a real Docker container running our Python (Pillow) code — which extracts metadata (format, dimensions, size, SHA-256), generates a thumbnail, and updates **S3 + DynamoDB** (`PROCESSED`).
-3. The Lambda publishes an **SNS** event on completion.
-4. `GET /api/v1/images/{id}` returns metadata plus pre-signed S3 URLs for the original and thumbnail.
+```text
+POST /api/v1/images ──▶ S3 stores original ──▶ DynamoDB "PENDING" record
+        │
+        ▼
+S3 event notification ──▶ Lambda (Pillow) ──▶ thumbnail + metadata
+        │                                          │
+        ▼                                          ▼
+DynamoDB "PROCESSED" ◀─────────────── SNS "image.processed" announcement
+```
 
-> **Why this app?** It maximizes the DevOps + cloud footprint with minimal, deterministic Python: storage, serverless compute, event-driven architecture, NoSQL, messaging, IAM, and observability — all exercised for $0. The "heavy lifting" is done by the cloud architecture, not by thousands of lines of application code.
+A user uploads a photo; ~5 seconds later it's processed, thumbnailed, catalogued, and announced — **automatically, no human in the loop**. That's event-driven architecture you can watch with your own eyes.
 
-## Repository Structure
+---
+
+## ⚙️ What's inside (the full surface)
+
+| Layer | Delivered | Proof |
+|---|---|---|
+| **Application** | FastAPI (Python 3.12) — upload/get/list images, health, version, Prometheus metrics, masked config | `app/` + 36 unit tests |
+| **Serverless** | Real Docker-backed Lambda: Pillow thumbnails + metadata + FAILED dead-letter | `lambda/image-processor/` + 17 tests |
+| **IaC** | 7 Terraform modules (storage, database, messaging, compute, observability, security, autoscaling) with S3 remote state + DynamoDB locking | `terraform/` — idempotent plan |
+| **Orchestration** | Helm chart → real k3s cluster; HPA auto-scaling; 4 deployment strategies proven live | `helm/imageflow`, `k8s/demo/` |
+| **CI/CD** | GitHub Actions (lint→test→build→security gates) + CodePipeline→CodeBuild (Kaniko)→CodeDeploy | `.github/workflows/`, `buildspec.yml`, `appspec.yml` |
+| **Observability** | Prometheus `/metrics` + CloudWatch metrics/logs/alarms + EventBridge→SNS alerting | `scripts/observability.sh` |
+| **Security** | KMS encryption, Secrets Manager (app can source creds from it), Cognito real JWTs, WAF v2, least-privilege IAM, CI gates (pip-audit/gitleaks/trivy) | `scripts/security.sh` + `security-audit.sh` |
+| **Reliability** | Backup/restore drills with measured RTO, chaos injection (kill pod/instance/API/image), auto-scaling reconciler | `scripts/reliability.sh` + 17 tests |
+| **Ops scripts** | 18 shellcheck-clean operational scripts (incl. CodeDeploy hooks), all behavior-tested | `scripts/` + 59 script tests |
+
+### Quality gates (all green)
+
+- ✅ **54 Python tests** (36 app + 17 Lambda + 1 live integration) · **59 shell-script behavior tests** across 7 suites
+- ✅ **ruff** clean (Python style) · **shellcheck** clean (shell style) · **Terraform validate/fmt** clean · **helm lint** clean
+- ✅ **CI on every push**: lint & static checks → unit tests → Docker build (trivy-scanned) → security gates (pip-audit + gitleaks + trivy filesystem)
+- ✅ **Idempotent infrastructure**: `terraform plan` = *"No changes"* — the blueprint matches reality
+
+---
+
+## 🚀 Quick start (60 seconds to a running pipeline)
+
+```bash
+# 1. Install the free toolchain (see docs/setup.md): Floci, AWS CLI, Terraform, Docker, kubectl, Helm
+
+# 2. Start the local cloud
+floci start && eval $(floci env)          # AWS at localhost:4566, creds test/test
+
+# 3. Provision infrastructure
+bash scripts/push-lambda.sh               # build + push the Lambda image to Floci ECR
+terraform -chdir=terraform/environments/dev apply -auto-approve
+
+# 4. Run the API
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r app/requirements.txt
+uvicorn app.main:app --port 8000
+
+# 5. Watch the pipeline work
+curl -s -F "file=@photo.jpg" http://localhost:8000/api/v1/images
+# ~5s later the record flips PENDING → PROCESSED with a thumbnail, automatically.
+```
+
+**Then prove it end-to-end by hand** — every layer, with expected outputs: [`docs/manual-verification.md`](docs/manual-verification.md).
+
+---
+
+## 📚 Documentation (the repo is documentation-first)
+
+| Document | What it is |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | The technical blueprint — components, data flow, design decisions, AWS↔Floci mapping |
+| [docs/roadmap.md](docs/roadmap.md) | The 19-phase mastery roadmap — what's done, what's next, how to know you're done |
+| [docs/setup.md](docs/setup.md) | The free-tooling installation guide (Floci, AWS CLI, Terraform, Docker, kubectl, Helm) |
+| [docs/DEVELOPER.md](docs/DEVELOPER.md) | The developer's guide — repo map, dev loop, testing, conventions, contributing |
+| [docs/source-control.md](docs/source-control.md) | Git workflow: GitHub Flow, conventional commits, squash merges, release tags |
+| [docs/deployment-strategies.md](docs/deployment-strategies.md) | Rolling / rollback / canary / blue-green — proven live on k3s |
+| [docs/monitoring.md](docs/monitoring.md) | Prometheus + CloudWatch: metrics, logs, alarms, SLI/SLO thinking |
+| [docs/security.md](docs/security.md) | KMS, Secrets Manager, Cognito, WAF, IAM, CI gates, threat model |
+| [docs/reliability.md](docs/reliability.md) | RTO/RPO drills, chaos engineering, auto-scaling reconcilers |
+| [docs/manual-verification.md](docs/manual-verification.md) | Run the whole system by hand and verify every layer |
+| [AGENTS.md](AGENTS.md) | How AI assistants operate in this repo (memory sync, ADRs, safety rules) |
+
+---
+
+## 📁 Repository structure
 
 ```text
 .
-├── .ai_memory/                 # AI memory bank (system state, active task, ADRs)
-├── .github/workflows/          # Outer-loop CI/CD (GitHub Actions)
-├── app/                        # ImageFlow API (FastAPI) + unit tests
-├── lambda/
-│   └── image-processor/        # Thumbnail/metadata Lambda (Pillow, image-backed)
-├── terraform/                  # IaC: modules + environments (Floci S3/DDB backend)
-├── helm/
-│   └── imageflow/              # Helm chart for Floci EKS / ECS deployment
-├── scripts/                    # deploy, health-check, cleanup, backup
-├── tests/                      # Integration + e2e suites (Floci-backed)
-├── docs/                       # architecture.md · roadmap.md · setup.md
-├── docker-compose.yml          # Local dev services
-├── floci-compose.yml           # Floci local cloud layer
-├── Makefile                    # Common commands
-├── AGENTS.md                   # AI agent operating rules + memory protocol
-└── README.md                   # This file
+├── app/                    # ImageFlow API (FastAPI) + unit tests
+├── lambda/image-processor/ # Thumbnail Lambda (Pillow, real Docker image)
+├── terraform/              # IaC: 7 modules + dev environment (S3/DDB backend)
+├── helm/imageflow/         # Helm chart → Floci EKS (real k3s)
+├── k8s/demo/               # Canary + blue/green manifests (Phase 12)
+├── scripts/                # 18 operational scripts + 7 test suites
+├── .github/workflows/      # Outer-loop CI/CD (GitHub Actions) — ci.yml · deploy.yml · release.yml
+├── Dockerfile · buildspec.yml · appspec.yml   # Build + pipeline instruction files
+├── tests/                  # Integration tests (Floci-backed)
+├── docs/                   # All documentation (table above)
+├── .ai_memory/             # AI session memory (state, tasks, ADRs)
+└── floci-compose.yml       # Optional docker-compose Floci layer
 ```
 
-## Quick Start
+---
 
-```bash
-# 1. Start the local AWS cloud (Floci)
-floci start                      # or: docker compose -f floci-compose.yml up -d
-eval $(floci env)                # exports AWS_ENDPOINT_URL, dummy credentials, region
+## 🗺️ Project status — where we are
 
-# 2. Verify the cloud is reachable
-aws s3 mb s3://imageflow-check
+**15 of 19 roadmap phases complete** — everything below is built, tested, and verified live:
 
-# 3. Provision infrastructure (Terraform → Floci)
-cd terraform
-terraform init && terraform apply
+- ✅ Phases 0–2, 4 — planning, source control, Bash automation
+- ✅ Phases 7–11 — containers, CI/CD (dual-loop), Terraform IaC, cloud infra, **real k3s + Helm**
+- ✅ Phase 12 — **all four deployment strategies proven live** on the cluster
+- ✅ Phase 13 — observability: metrics, logs, alarms, alerting
+- ✅ Phase 14 — security hardening: KMS, Secrets Manager, Cognito JWTs, WAF, CI gates
+- ✅ Phase 15 — reliability: measured RTO drills, chaos injection, auto-scaling reconcilers
+- 🔜 **Phase 16 — GitOps** (Flux/ArgoCD-style declarative sync) — next up
+- ⬜ Phases 3, 5, 17–19 — Linux fundamentals, Python for DevOps, troubleshooting lab, interview prep (deferred/planned)
 
-# 4. Run the API locally (venv at the repo root)
-python -m venv .venv && source .venv/bin/activate
-pip install -r app/requirements.txt
-uvicorn app.main:app --reload
+**Honesty is a feature:** every emulator limitation is documented (e.g., Floci validates SigV4 but doesn't enforce IAM authorization; CodeDeploy lifecycle is simulated). Real-AWS-correct design + honest local limits = a credible portfolio.
 
-# 5. Try it
-curl -X POST -F "file=@photo.jpg" http://localhost:8000/api/v1/images
-```
+---
 
-| Document | Purpose |
-|---|---|
-| [docs/setup.md](docs/setup.md) | Full free-tooling setup: Floci, AWS CLI, Terraform, Docker, kubectl, Helm, Freebuff + optional OpenCode Zen |
-| [docs/architecture.md](docs/architecture.md) | Detailed architecture: ImageFlow, Floci deep-dive, CI/CD, IaC, security, observability |
-| [docs/roadmap.md](docs/roadmap.md) | The 19-phase learning roadmap |
-| [docs/source-control.md](docs/source-control.md) | Phase 2: branching strategy, commit conventions, PR workflow, release tagging |
-| [docs/deployment-strategies.md](docs/deployment-strategies.md) | Phase 12: rolling / rollback / canary / blue-green demos on k3s |
-| [docs/monitoring.md](docs/monitoring.md) | Phase 13: Prometheus /metrics + CloudWatch metrics/logs/alarms, SLIs/SLOs, demo runbook |
-| [docs/security.md](docs/security.md) | Phase 14: IAM least-privilege, Secrets Manager + KMS, Cognito JWT, WAF, CI security gates, threat model |
-| [docs/reliability.md](docs/reliability.md) | Phase 15: backup/restore drills with measured RTO, chaos/failure injection, auto-scaling reconciler, RPO/RTO |
-| [docs/manual-verification.md](docs/manual-verification.md) | Manual execution + verification runbook: static checks → live pipeline → k8s → CI/CD → observability → security → reliability → teardown |
-| [AGENTS.md](AGENTS.md) | AI agent operating rules + memory sync protocol |
-| `.ai_memory/` | Long-term project memory (state, tasks, ADRs) |
+## 🤝 Contributing & learning
 
-## The Roadmap at a Glance (Phases 0–19)
+- New to the repo? Start with **[docs/DEVELOPER.md](docs/DEVELOPER.md)** — the developer's guide.
+- Want the full learning path? Read **[docs/roadmap.md](docs/roadmap.md)**.
+- Found something that could be better? Open an issue or PR — contributions follow [docs/source-control.md](docs/source-control.md).
 
-| # | Phase | # | Phase |
-|---|---|---|---|
-| 0 | Planning & Architecture | 10 | Cloud Infrastructure (S3, DynamoDB, Lambda, SNS, EC2, RDS…) |
-| 1 | Application Foundation | 11 | Orchestration (Floci EKS k3s + ECS) |
-| 2 | Source Control | 12 | Deployment Strategies |
-| 3 | Linux Fundamentals | 13 | Monitoring & Observability |
-| 4 | Bash & Automation | 14 | Security |
-| 5 | Python for DevOps | 15 | Reliability Engineering |
-| 6 | Code Quality | 16 | GitOps |
-| 7 | Containerization | 17 | Troubleshooting Lab |
-| 8 | CI/CD (dual-loop) | 18 | Documentation |
-| 9 | Infrastructure as Code | 19 | Interview Preparation |
+---
 
-A phase is complete **only when you can confidently explain, implement, troubleshoot, and defend every decision.** Full details in [docs/roadmap.md](docs/roadmap.md).
+## 📜 License
 
-## Current Status
-
-- ✅ **Phase 0 (Planning & Architecture)** — this documentation set is the deliverable.
-- ✅ **Phase 1 (Application Foundation)** — FastAPI ops endpoints live, tested (5/5), committed (`1706b26`).
-- ✅ **Phase 2 (Source Control)** — workflow documented (`docs/source-control.md`) and practiced end-to-end (feature branch → conventional commits → squash merge → branch deleted). PR flow activates once a GitHub remote exists (Phase 8).
-- ✅ **Phase 4 (Bash & Automation)** — all four operational scripts implemented + tested (26 tests), `scripts/lint.sh` shellcheck-clean.
-- ✅ **Phase 7 kickoff / Phase 8 kickoff (CI-ready foundation)** — multi-stage non-root Dockerfile (build + smoke verified) and `.github/workflows/ci.yml` (ruff → pytest → shellcheck → docker build), validated locally with `act`.
-- ✅ **CI LIVE & GREEN on GitHub** — real runs on every push (`ruff → shellcheck → pytest → docker build`). The first real run caught a shellcheck version skew (apt 0.9.0 vs brew 0.11.0) — fixed by pinning shellcheck v0.11.0 and verified passing. Badge above is live.
-- ✅ **ImageFlow pipeline COMPLETE end-to-end + Terraform-provisioned** — upload (`POST /api/v1/images` → S3 + DynamoDB PENDING) · **process** (image-backed Lambda fires **automatically** via S3 event notification — Pillow thumbnail + metadata → `PROCESSED` + SNS `image.processed`; verified in ~5s) · retrieve (GET returns original + thumbnail presigned URLs). Terraform IaC (`terraform/`) provisions everything against Floci with S3 remote state + DynamoDB locking (`9b745dc`).
-- ✅ **Phase 11 — Kubernetes deployment LIVE** — the API also runs in **Floci EKS (real k3s)** via the `helm/imageflow` chart (Deployment, Service, ConfigMap, Secret, HPA). Uploads through the clustered API get auto-processed by the Lambda. Two deployment targets: serverless + Kubernetes (`51661a5`).
-- ✅ **Phase 7/8 — Inner-loop CI/CD LIVE** — **CodePipeline → CodeBuild → CodeDeploy** end-to-end on Floci (`69fe882`). CodeBuild runs the real buildspec (ruff + pytest gates → **Kaniko daemonless** image build + push to ECR); CodeDeploy targets an on-premises deployment group with auto-rollback. Three deployment paths now: serverless, Kubernetes, and CI/CD pipeline (ADR-10 logs the Kaniko deviation). GitHub Actions `deploy.yml` + `release.yml` complete the outer loop.
-- ✅ **Phase 12 — Deployment Strategies COMPLETE** — all four strategies **proven live on the k3s cluster** (`6397127`): **rolling** (chart now ships explicit RollingUpdate, maxSurge 1 / maxUnavailable 0), **rollback** (broken image → CrashLoop → `kubectl rollout undo` → v2 restored), **canary** (v3 slice measured at **38/42 ≈ 50/50** with 3+3 pods via in-cluster ClusterIP), and **blue/green** (atomic Service selector flip: 20/20 v2 → 20/20 v3 → flip back). Reproduce with `scripts/demo-deploy-strategies.sh`; full write-up + Floci CodeDeploy caveat in `docs/deployment-strategies.md`.
-- ✅ **Phase 13 — Monitoring & Observability COMPLETE** — three observability planes live and probe-verified: **Prometheus `/metrics`** (pipeline counters + upload-latency histogram), **CloudWatch custom metrics** (namespace `ImageFlow`: API emits `Uploads`/`UploadErrors`, Lambda emits `ProcessedCount`/`FailedCount`), **CloudWatch Logs** (optional handler → `/imageflow/api`), and **alerting** (Terraform alarms `imageflow-failed-images` + `imageflow-upload-errors` → SNS via EventBridge rule). Inspect with `scripts/observability.sh`; full write-up + demo runbook in `docs/monitoring.md`. Floci stores alarm state but not alarm actions — documented in ADR-11.
-- ✅ **Phase 14 — Security Hardening COMPLETE** — probe-verified + live on Floci: **KMS** key/alias with encrypt→decrypt round trip, **Secrets Manager** (`imageflow/app-secret`) with **secrets-backed credential resolution** (`IMAGEFLOW_SECRET_NAME`), **Cognito** full auth flow with real JWT claims, **WAF v2** web ACL (rate-limit + managed rules), **least-privilege IAM** user + tightened Lambda policy, `scripts/security-audit.sh` (secret scan + IAM review), and **CI gates** (pip-audit + gitleaks + trivy fs/image). Full write-up + threat model in `docs/security.md` (ADR-12). Floci validates SigV4 but doesn't enforce IAM authorization — documented honestly.
-- ✅ **Phase 15 — Reliability Engineering COMPLETE** — `scripts/reliability.sh` drives the full story live on Floci: **backup** (paginated DynamoDB export + S3 sync → `data/backups/cloud-<ts>/` with manifest) · **restore** (batch-write + sync + count verification) · **drill** (backup → simulated loss → restore → verify → **measured RTO**, RPO=0 for the drill) · **chaos** (`kill-pod` → Deployment controller self-heals on k3s; `kill-instance` → **ASG Auto Scaling replacement** in ~9s; `kill-api` → process restart; `fail-image` → Lambda FAILED dead-letter → fix + replay S3 event → PROCESSED) · **scaling** (live HPA + Deployment reconcilers + ASG instance count) · **reconcile [--apply]** (explicit desired-vs-actual loop over ASG + Deployment + HPA). Terraform `autoscaling` module provisions `imageflow-asg` (launch-template backed — the ASG reconciler is genuinely live; launch *configurations* fail on Floci). Full write-up + demo runbook in `docs/reliability.md` (ADR-13).
-- ✅ **FULL-SYSTEM LIVE DRILL (2026-08-05)** — every layer run together in one continuous pass on Floci (static → terraform idempotent → API upload→PROCESSED/FAILED → observability → security → reliability → k8s → inner-loop CodePipeline **Succeeded**). Four real issues caught & fixed (PR #4 `eb20ed1`): `chaos kill-api` pid off-by-one on macOS (`deploy.sh` now resolves the real port listener), the fail-image + API-route upload race (record-before-object, with rollback so no zombie PENDING items), and Terraform idempotency (`ignore_changes` for Floci non-persistent attrs → "No changes"). Reproduce everything by hand with `docs/manual-verification.md`.
-- See `.ai_memory/system_state.md` and `.ai_memory/active_task.md` for live status.
+[MIT](LICENSE) — free to learn from, free to build on, free to fork. Built with [Floci](https://floci.io), the MIT-licensed AWS emulator. **Total cloud spend: $0.00.**
