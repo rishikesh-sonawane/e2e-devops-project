@@ -59,6 +59,8 @@
 
 <!-- Future sessions: append new entries below, never edit above. -->
 
+- **docs: manual verification runbook added** (`5a88bf1` on main, PR #3 squash, CI green, branch deleted): `docs/manual-verification.md` — the complete ordered runbook to execute + verify every layer by hand (static checks → cloud bring-up → serverless pipeline demo → k8s/deploy strategies → inner-loop CI/CD → observability → security → reliability → GitHub CI → teardown, + 60-second checklist). Linked from README docs table. Written because the user wants to run/validate everything manually.
+
 - **User decision:** Phase 5 (Python for DevOps) is **deferred** — "skip for now, pick it up later." Draft plan (tools/ package: imageflow-cli API client, backup-audit, config-lint + docs/python-devops.md) recorded in active_task for later. **Phase 16 — GitOps remains the next phase.**
 
 ### 2026-08-05 — Phase 15 SHIPPED
