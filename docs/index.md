@@ -19,6 +19,7 @@
 | **[:material-code-tags: Developer Guide](DEVELOPER.md)** | Repo map, dev loop, testing matrix, conventions, troubleshooting |
 | **[:material-sign-direction: 19-Phase Roadmap](roadmap.md)** | The complete DevOps mastery curriculum — what's done, what's next |
 | **[:material-source-branch: Source Control](source-control.md)** | Git workflow: GitHub Flow, conventional commits, squash merges |
+| **[:material-robot: AI-Assisted Development](ai-assisted-development.md)** | A candid retrospective: what went wrong, where the human was irreplaceable, and the playbook |
 | **[:material-kubernetes: Deployment Strategies](deployment-strategies.md)** | Rolling / rollback / canary / blue-green — proven live on a real k3s cluster |
 | **[:material-chart-line: Monitoring & Observability](monitoring.md)** | Prometheus + CloudWatch metrics, logs, alarms, SLI/SLO thinking |
 | **[:material-lock: Security](security.md)** | KMS, Secrets Manager, Cognito JWT, WAF, IAM, CI security gates |

@@ -63,6 +63,7 @@ nav:
   - Architecture & Design:
       - Architecture: architecture.md
       - Source Control: source-control.md
+      - AI-Assisted Development Retrospective: ai-assisted-development.md
   - Roadmap:
       - The 19-Phase Mastery Roadmap: roadmap.md
   - Operations:
