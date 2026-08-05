@@ -1,6 +1,14 @@
 # Active Task State
 
 ## Current Focus
+**PORTFOLIO DOCS DONE — PR #7 merged `6c1be72`:** README rewritten (badges, curriculum table, architecture diagram, surface table, quality gates, 60s quick start), docs/architecture.md rewritten (first-principles → 3 core decisions → logical/layered/deployment views → components → data model → ADR table → honest Floci limits → interview points), docs/DEVELOPER.md new (repo map, dev loop, testing matrix, CI/CD, conventions, worked example, troubleshooting, DoD), LICENSE (MIT) added, GitHub repo description + 16 topics set. Reviewer-verified facts: 54 tests (36+17+1), 59 script tests/7 suites, 7 modules, 18 scripts, 19 phases. All real links resolve.
+
+Prior this week: manual runbook walk-through (PR #6 `abb9308` — setup-inner-loop idempotency + pytest count 54), docs update (PR #5 `704dc22`), live drill + 4 fixes (PR #4 `eb20ed1`), runbook (PR #3 `5a88bf1`). Main clean at `6c1be72`. **Next: Phase 16 — GitOps (Flux/ArgoCD-style declarative sync on the k3s cluster).**
+
+---
+
+*Below: pre-drill state, superseded.*
+
 **FULL MANUAL RUNBOOK WALK-THROUGH COMPLETE — user asked "have you done a manual test yet?" → ran the entire system end-to-end against `docs/manual-verification.md` (Phases 0–9), live on Floci, on current main.** All green: 54 pytest (36 app + 17 lambda + 1 live integration), ruff/shellcheck, 59 script tests, terraform "No changes" + inventory, upload→PROCESSED instant + junk→FAILED, k8s pod + HPA + port-forward health, inner-loop CodePipeline **Succeeded**, observability + security.sh all + audit, reliability (backup 81 items, drill RTO 4s, kill-instance 7s, fail-image, scaling, reconcile), kill-api round trip exit 0, GitHub CI green. **Two more loose ends fixed (PR #6, squash `abb9308`):** ① `setup-inner-loop.sh` not idempotent (create_application lacked try/except → exit 1 on re-run) — fixed, proven exit 0; ② runbook pytest count 53→54 (live integration test runs locally, skips in CI). Cleaned leftover probe resources (probe-pool, probe-user; probe-acl WAF is a harmless Floci lock-token quirk). Prior this week: live drill + 4 fixes (PR #4 `eb20ed1`), docs update (PR #5 `704dc22`), runbook (PR #3 `5a88bf1`). Main clean at `abb9308`. **Next: Phase 16 — GitOps (Flux/ArgoCD-style declarative sync on the k3s cluster).**
 
 ## Immediate Next Steps
