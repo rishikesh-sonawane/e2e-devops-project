@@ -63,7 +63,11 @@ import boto3
 ep = "http://localhost:4566"
 kw = dict(endpoint_url=ep, region_name="us-east-1", aws_access_key_id="test", aws_secret_access_key="test")
 cd = boto3.client("codedeploy", **kw)
-cd.create_application(applicationName="imageflow", computePlatform="Server")
+try:
+    cd.create_application(applicationName="imageflow", computePlatform="Server")
+    print("  application created")
+except Exception as e:
+    print("  application may exist:", str(e)[:80])
 try:
     cd.register_on_premises_instance(instanceName="imageflow-ec2",
                                      iamSessionArn="arn:aws:iam::000000000000:role/CodeDeployServiceRole")

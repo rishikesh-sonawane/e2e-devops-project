@@ -41,7 +41,8 @@ floci doctor             # all checks pass?
 
 ```bash
 source .venv/bin/activate
-pytest -q                          # expect: 53 passed (36 app + 17 lambda)
+pytest -q                          # expect: 54 passed (36 app + 17 lambda + 1 live integration)
+                                   # (53 in CI — the tests/ integration test skips without Floci)
 ruff check app/ lambda/image-processor/      # expect: All checks passed
 bash scripts/lint.sh               # expect: shellcheck: all scripts clean
 for t in scripts/tests/test_*.sh; do echo "== $t"; bash "$t" | tail -1; done   # 7 suites, all PASSED
@@ -270,7 +271,7 @@ floci stop                                       # stop the local cloud (full re
 
 ## The 60-second "everything is verified" checklist
 
-1. `pytest -q` → **53 passed** · `bash scripts/lint.sh` clean · 59 script tests pass.
+1. `pytest -q` → **54 passed** (53 unit + 1 live integration) · `bash scripts/lint.sh` clean · 59 script tests pass.
 2. `terraform apply` → **No changes** · ASG shows 1 instance.
 3. Upload a PNG → **PROCESSED in ~5s** with a thumbnail.
 4. `bash scripts/observability.sh` → metric datapoints + alarms present.
