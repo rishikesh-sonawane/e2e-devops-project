@@ -100,6 +100,18 @@ else
     if [ "$code" -eq 0 ]; then
         pass "full deploy (API start + smoke) exits 0 (got $code)"
         if [ -f "$REPO_ROOT/data/api.pid" ]; then API_PID="$(cat "$REPO_ROOT/data/api.pid")"; fi
+
+        # 9b. The pidfile must point at the REAL uvicorn listener, not the
+        # backgrounded compound's wrapper pid (macOS off-by-one that made
+        # `chaos kill-api` fail with "API process N not running" — fixed in
+        # step_api by resolving the port listener).
+        REAL_API_PID="$(lsof -ti "tcp:8032" -sTCP:LISTEN 2>/dev/null | head -1 || true)"
+        PIDFILE_PID="$(cat "$REPO_ROOT/data/api.pid" 2>/dev/null || true)"
+        if [ -n "$REAL_API_PID" ] && [ "$PIDFILE_PID" = "$REAL_API_PID" ]; then
+            pass "pidfile matches real listener pid ($PIDFILE_PID)"
+        else
+            fail "pidfile matches real listener pid (pidfile=$PIDFILE_PID, listener=$REAL_API_PID)"
+        fi
     else
         fail "full deploy (API start + smoke) exits 0 (got $code)"
         tail -5 /tmp/deploy-full.log 2>/dev/null || true

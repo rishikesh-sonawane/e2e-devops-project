@@ -59,7 +59,15 @@ async def upload_image(file: UploadFile = File(...)) -> dict:  # noqa: B008 — 
         s3 = storage.get_s3_client()
         ddb = metadata.get_ddb_client()
         start = time.perf_counter()
-        original_key = storage.upload_original(s3, image_id, filename, data, content_type)
+        # Order matters (live drill caught the race): write the metadata record
+        # BEFORE the object lands in S3. The S3 event notification can fire
+        # moments after the put — if the record doesn't exist yet, the Lambda
+        # skips it ("missing record") and the image is stuck PENDING forever.
+        # With the record first, the event always finds its PENDING record and
+        # the corrupt/failed case becomes a visible FAILED dead-letter instead
+        # of a silent strand. (If the upload itself fails, the dangling PENDING
+        # record is picked up by process-pending → FAILED — observable.)
+        original_key = storage.original_key(image_id, filename)
         record = metadata.create_record(
             ddb,
             image_id,
@@ -68,6 +76,15 @@ async def upload_image(file: UploadFile = File(...)) -> dict:  # noqa: B008 — 
             size=len(data),
             original_key=original_key,
         )
+        try:
+            storage.upload_original(s3, image_id, filename, data, content_type)
+        except Exception:
+            # The record was written first so the S3 event always finds its
+            # PENDING item — but if the object itself then fails to upload,
+            # roll the record back rather than leaving a zombie PENDING item
+            # that would never resolve (no object to process).
+            metadata.delete_record(ddb, image_id)
+            raise
         observability.UPLOAD_DURATION_SECONDS.observe(time.perf_counter() - start)
         observability.UPLOADS_TOTAL.inc()
         observability.emit_upload()

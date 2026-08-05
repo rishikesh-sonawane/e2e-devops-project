@@ -86,6 +86,13 @@ resource "aws_cognito_user_pool" "app" {
     Project     = "imageflow"
     Environment = var.environment
   }
+  # Floci quirk (probe-verified): the provider's device_configuration /
+  # user_pool_add_ons defaults are not persisted (return null on refresh) —
+  # ignoring keeps the plan idempotent ("No changes"). Real-AWS behavior is
+  # unaffected (the defaults are AWS defaults either way).
+  lifecycle {
+    ignore_changes = [device_configuration, user_pool_add_ons]
+  }
 }
 
 resource "aws_cognito_user_pool_client" "app" {
@@ -170,6 +177,13 @@ resource "aws_iam_user" "demo" {
   tags = {
     Project     = "imageflow"
     Environment = var.environment
+  }
+  # Floci quirk (probe-verified): IAM user tags are accepted but not
+  # persisted, so without this the plan shows a perpetual in-place tag diff.
+  # Tags stay declared (real-AWS-correct); ignore_changes keeps the local
+  # plan idempotent ("No changes"). Same class of quirk as ADR-12/13.
+  lifecycle {
+    ignore_changes = [tags, tags_all]
   }
 }
 

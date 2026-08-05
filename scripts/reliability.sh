@@ -378,10 +378,14 @@ chaos_fail_image() {
     id="fail-image-$(date +%s)"
     bad="$(mktemp)"
     printf 'this is not an image' > "$bad"
-    info "  uploading corrupt bytes as uploads/$id/corrupt.bin..."
+    info "  creating the metadata record FIRST, then uploading corrupt bytes..."
+    # Order matters (the live drill caught this race): put-item BEFORE s3 cp, or
+    # the S3 event can fire while the record doesn't exist yet → the Lambda skips
+    # it ("missing record") and the record stays PENDING forever. Record-first
+    # guarantees the event finds its PENDING record → corrupt bytes → FAILED.
+    aws_cmd dynamodb put-item --table-name "$TABLE" --item "{\"image_id\":{\"S\":\"$id\"},\"filename\":{\"S\":\"corrupt.bin\"},\"size\":{\"N\":\"20\"},\"status\":{\"S\":\"PENDING\"},\"original_key\":{\"S\":\"uploads/$id/corrupt.bin\"},\"content_type\":{\"S\":\"application/octet-stream\"}}" >/dev/null
     aws_cmd s3 cp "$bad" "s3://$UPLOADS_BUCKET/uploads/$id/corrupt.bin" >/dev/null
     rm -f "$bad"
-    aws_cmd dynamodb put-item --table-name "$TABLE" --item "{\"image_id\":{\"S\":\"$id\"},\"filename\":{\"S\":\"corrupt.bin\"},\"size\":{\"N\":\"20\"},\"status\":{\"S\":\"PENDING\"},\"original_key\":{\"S\":\"uploads/$id/corrupt.bin\"},\"content_type\":{\"S\":\"application/octet-stream\"}}" >/dev/null
 
     info "  waiting for Lambda to mark it FAILED (dead-letter)..."
     wait_status "$id" FAILED 60 || { error "corrupt image did not reach FAILED — is the Lambda trigger wired?"; return 1; }
