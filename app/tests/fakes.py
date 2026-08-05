@@ -44,6 +44,65 @@ class FakeCloudWatch:
         return {"nextSequenceToken": "tok-1"}
 
 
+class FakeSecretsManager:
+    """In-memory Secrets Manager (Phase 14): create_secret + get_secret_value."""
+
+    class exceptions:
+        class ResourceNotFoundException(Exception):
+            pass
+
+        class ResourceExistsException(Exception):
+            pass
+
+    def __init__(self) -> None:
+        self.secrets: dict[str, str] = {}
+
+    def create_secret(self, **kwargs) -> dict:
+        name = kwargs["Name"]
+        if name in self.secrets:
+            raise self.exceptions.ResourceExistsException(name)
+        self.secrets[name] = kwargs.get("SecretString", "")
+        return {"ARN": f"arn:aws:secretsmanager:us-east-1:000000000000:secret:{name}"}
+
+    def update_secret(self, **kwargs) -> dict:
+        name = kwargs["SecretId"]
+        self.secrets[name] = kwargs.get("SecretString", "")
+        return {"ARN": f"arn:aws:secretsmanager:us-east-1:000000000000:secret:{name}"}
+
+    def get_secret_value(self, **kwargs) -> dict:
+        name = kwargs["SecretId"]
+        if name not in self.secrets:
+            raise self.exceptions.ResourceNotFoundException(name)
+        return {"SecretString": self.secrets[name]}
+
+
+class FakeKMS:
+    """In-memory KMS (Phase 14): reversible encrypt/decrypt via base64.
+
+    Not real crypto — the tests only prove the round trip + boto3 call shape.
+    """
+
+    def __init__(self) -> None:
+        self.keys: set[str] = set()
+
+    def create_key(self, **kwargs) -> dict:
+        key_id = f"key-{len(self.keys) + 1}"
+        self.keys.add(key_id)
+        arn = f"arn:aws:kms:us-east-1:000000000000:key/{key_id}"
+        return {"KeyMetadata": {"KeyId": key_id, "Arn": arn}}
+
+    def encrypt(self, **kwargs) -> dict:
+        import base64
+
+        blob = base64.b64encode(kwargs["Plaintext"])
+        return {"CiphertextBlob": blob}
+
+    def decrypt(self, **kwargs) -> dict:
+        import base64
+
+        return {"Plaintext": base64.b64decode(kwargs["CiphertextBlob"])}
+
+
 class FakeDDB:
     def __init__(self) -> None:
         self.tables: set[str] = set()

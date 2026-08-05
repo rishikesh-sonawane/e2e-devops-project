@@ -1,24 +1,28 @@
 """S3 storage service.
 
 All clients declare the Floci endpoint explicitly (AGENTS.md §2) — the app
-never relies on ambient real-cloud configuration.
+never relies on ambient real-cloud configuration. Credentials come from
+resolve_aws_credentials() (Phase 14): Secrets Manager when IMAGEFLOW_SECRET_NAME
+is set, otherwise env/settings.
 """
 from __future__ import annotations
 
 import boto3
 
 from app.config.settings import get_settings
+from app.services.secrets import resolve_aws_credentials
 
 
 def get_s3_client():
     """S3 client pointed at the local cloud (Floci)."""
     settings = get_settings()
+    access_key, secret_key = resolve_aws_credentials()
     return boto3.client(
         "s3",
         endpoint_url=settings.aws_endpoint_url,
         region_name=settings.aws_region,
-        aws_access_key_id=settings.aws_access_key_id.get_secret_value(),
-        aws_secret_access_key=settings.aws_secret_access_key.get_secret_value(),
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
     )
 
 

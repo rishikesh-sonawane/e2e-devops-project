@@ -12,15 +12,20 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services import observability
-from app.tests.fakes import FakeCloudWatch
+from app.tests.fakes import FakeCloudWatch, FakeDDB, FakeS3
 
 client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
 def fake_cw(monkeypatch):
+    """Hermetic cloud: fake CloudWatch (asserted on) + fake S3/DDB so the
+    upload route never touches the network (CI has no Floci; same pattern as
+    test_images_api.py)."""
     fake = FakeCloudWatch()
     monkeypatch.setattr(observability, "get_cloudwatch_client", lambda: fake)
+    monkeypatch.setattr("app.services.storage.get_s3_client", lambda: FakeS3())
+    monkeypatch.setattr("app.services.metadata.get_ddb_client", lambda: FakeDDB())
     return fake
 
 

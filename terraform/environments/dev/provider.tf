@@ -9,6 +9,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -22,15 +26,19 @@ provider "aws" {
   s3_use_path_style           = true
 
   endpoints {
-    s3         = var.endpoint_url
-    dynamodb   = var.endpoint_url
-    sns        = var.endpoint_url
-    lambda     = var.endpoint_url
-    iam        = var.endpoint_url
-    ecr        = var.endpoint_url
-    sts        = var.endpoint_url
-    cloudwatch = var.endpoint_url
-    logs       = var.endpoint_url
-    events     = var.endpoint_url
+    s3             = var.endpoint_url
+    dynamodb       = var.endpoint_url
+    sns            = var.endpoint_url
+    lambda         = var.endpoint_url
+    iam            = var.endpoint_url
+    ecr            = var.endpoint_url
+    sts            = var.endpoint_url
+    cloudwatch     = var.endpoint_url
+    logs           = var.endpoint_url
+    events         = var.endpoint_url
+    kms            = var.endpoint_url
+    secretsmanager = var.endpoint_url
+    cognitoidp     = var.endpoint_url
+    wafv2          = var.endpoint_url
   }
 }

@@ -228,7 +228,7 @@ Interview Topics: Golden Signals, RED, USE, MTTR.
 
 ---
 
-## Phase 14 — Security
+## Phase 14 — Security ✅ (complete)
 
 Master: identity, secrets, encryption, least privilege, supply chain security, image scanning, dependency scanning, policy enforcement, compliance.
 
@@ -239,6 +239,16 @@ Build:
 - Cognito user pools via Floci Cognito
 - WAF via Floci WAF v2; certificates via Floci ACM
 - CI security gates: Trivy image scan, pip-audit, SAST
+
+> **Complete ✅ (ADR-12)** — all security services probe-verified on Floci, provisioned by the Terraform `security` module, and demoed live:
+> - **KMS** — key + alias (`alias/imageflow-app-key`); `security.sh kms` proves encrypt→decrypt round trip with opaque ciphertext.
+> - **Secrets Manager** — `imageflow/app-secret` provisioned; `app/services/secrets.py` adds `fetch/put (upsert)/kms` helpers + **secrets-backed credential resolution** (`IMAGEFLOW_SECRET_NAME` → the app builds boto3 clients from secret-sourced creds; non-fatal fallback).
+> - **Cognito** — pool + client + generated-password user; `security.sh cognito` runs the FULL flow live: admin-create → NEW_PASSWORD_REQUIRED challenge → respond → **real JWT claims** (iss/sub/exp/aud) decoded.
+> - **WAF v2** — `imageflow-web-acl` with rate-limit (100/5min IP) + AWS-managed common rules; `security.sh waf` lists live rules.
+> - **IAM** — `imageflow-reader` least-privilege user (one-bucket read-only policy); Lambda policy tightened (log-stream perms scoped to its log group). **Honest finding:** Floci validates SigV4 but does NOT enforce IAM authorization (probe-verified) — design real-AWS-correct, enforcement is a real-account control.
+> - **Audit** — `scripts/security-audit.sh`: ripgrep secret scan (fails on findings — caught a literal fake key in a test fixture during dev) + IAM wildcard review. Behavior tests: 8.
+> - **CI gates** — `security` job (pip-audit both reqs + gitleaks + trivy fs) + trivy image scan in build; runs under act.
+> - Docs: `docs/security.md` (threat model → control map, demo runbook).
 
 Interview Topics: security in CI/CD, secrets management, IAM design.
 

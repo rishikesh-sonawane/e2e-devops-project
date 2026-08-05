@@ -76,6 +76,7 @@ Thumbs.db
 
 # ─── Personal notes (not part of the project) ───────────────────────
 Rishi's Understanding.md
+component-wise-architecture/
 
 # ─── Must NOT be ignored ───────────────────────────────────────────
 # .ai_memory/            <- project memory, commit it

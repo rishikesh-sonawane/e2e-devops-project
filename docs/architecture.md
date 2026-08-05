@@ -194,6 +194,16 @@ Two orchestration targets for learning:
 | Floci WAF v2 | Web ACLs, rate limiting |
 | Floci CloudTrail | API activity logging |
 
+> **Phase 14 delivered:** the Terraform `security` module provisions a KMS
+> key + alias, the `imageflow/app-secret` Secrets Manager secret, a Cognito
+> pool/client/user, the `imageflow-web-acl` (rate-limit + managed rules), and
+> the least-privilege `imageflow-reader` IAM user. The API can source its AWS
+> credentials from Secrets Manager (`IMAGEFLOW_SECRET_NAME`, ADR-12); the
+> Lambda IAM policy is tightened to log-group scoping. CI enforces
+> pip-audit + gitleaks + trivy gates. Honest limit: Floci validates SigV4
+> but does not enforce IAM authorization. Full details: `docs/security.md`
+> · demos: `scripts/security.sh` · audit: `scripts/security-audit.sh`.
+
 ---
 
 ## 4. Floci Integration Deep Dive

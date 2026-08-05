@@ -101,15 +101,19 @@ resource "aws_iam_policy" "processor" {
         Action   = ["sns:CreateTopic"]
         Resource = ["*"]
       },
+      # Least privilege (Phase 14): CreateLogGroup cannot be ARN-scoped, but
+      # CreateLogStream/PutLogEvents are scoped to this function's log group.
       {
-        Sid    = "CloudWatchLogs"
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-        ]
+        Sid      = "CloudWatchLogs"
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup"]
         Resource = ["*"]
+      },
+      {
+        Sid      = "CloudWatchLogStream"
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = ["arn:aws:logs:*:*:log-group:/aws/lambda/${var.function_name}:*"]
       },
       # Phase 13: the Lambda emits ProcessedCount/FailedCount. PutMetricData
       # is namespace-scoped, not ARN-scoped — the wildcard is the AWS-correct

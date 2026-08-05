@@ -28,15 +28,21 @@ module "compute" {
   thumbs_bucket      = var.thumbs_bucket
   metadata_table_arn = module.database.table_arn
   sns_topic_arn      = module.messaging.topic_arn
-}
-
-# Observability (Phase 13): CloudWatch alarms + EventBridge → SNS alerting
+} # Observability (Phase 13): CloudWatch alarms + EventBridge → SNS alerting
 # on the ImageFlow custom metrics (Uploads/UploadErrors from the API,
 # ProcessedCount/FailedCount from the Lambda).
 module "observability" {
   source      = "../../modules/observability"
   topic_arn   = module.messaging.topic_arn
   environment = var.environment
+}
+
+# Security (Phase 14): KMS key, Secrets Manager, Cognito, WAF v2, and a
+# least-privilege IAM demo user.
+module "security" {
+  source         = "../../modules/security"
+  environment    = var.environment
+  uploads_bucket = var.uploads_bucket
 }
 
 # The notification depends on the Lambda existing (module graph handles it),
