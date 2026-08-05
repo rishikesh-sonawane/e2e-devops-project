@@ -254,7 +254,7 @@ Interview Topics: security in CI/CD, secrets management, IAM design.
 
 ---
 
-## Phase 15 — Reliability Engineering
+## Phase 15 — Reliability Engineering ✅ (complete)
 
 Master: availability, scalability, resiliency, fault tolerance, disaster recovery, capacity planning.
 
@@ -263,6 +263,13 @@ Build (failure + recovery testing on Floci):
 - Recovery: Auto Scaling replacement, Lambda retries/DLQ
 - Performance: load against local S3, DynamoDB, Lambda
 - Chaos: stop containers, exhaust SQS, rotate IAM keys
+
+> **Complete ✅ (ADR-13)** — `scripts/reliability.sh` drives the full reliability story **live on Floci** (17 behavior tests, fake aws + kubectl):
+> - **Backup/restore drills** — `backup` exports `ImageFlowMetadata` **paginated** (JSON-lines, `--max-items`/`--starting-token`) + syncs `uploads/`/`thumbs/` → `data/backups/cloud-<ts>/` with a manifest; `restore` writes items back via `batch-write-item` (25/chunk, UnprocessedItems retries) + syncs S3 and **verifies counts against the manifest**; `drill` runs the full cycle (probe data → backup → simulated loss → restore → verify) and reports **measured RTO** (RPO=0 for the drill; production RPO = backup cadence).
+> - **Failure injection** — `chaos kill-pod` (k3s pod delete → **Deployment controller self-heals**, recovery time measured) · `kill-instance` (ASG EC2 terminate → **Auto Scaling replacement** in ~9s) · `kill-api` (API process kill → `/health` fails → `deploy.sh` restart → healthy) · `fail-image` (corrupt upload → Lambda **FAILED dead-letter** → reset + fix the object → **replay the S3 event via `aws lambda invoke`** → PROCESSED — the real serverless retry path; the reset precedes the fix so the replay is the single deterministic retry — idempotent processing prevents double-counting, `ProcessedCount` verified at exactly 1).
+> - **Auto-scaling reconciler** — `scaling` demonstrates the live k3s HPA + Deployment reconcilers AND the ASG instance count; `reconcile [--apply]` is the **explicit desired-vs-actual loop** over ASG + Deployment + HPA (dry-run by default; `--apply` runs `update-auto-scaling-group`/`kubectl scale`). Terraform `modules/autoscaling` provisions `imageflow-asg` (launch template `ami-test`/`t3.micro`, explicit AZs `us-east-1a/b`, min 1 / max 3 / desired 1).
+> - **Honest Floci finding (refined by probe)** — `aws_launch_configuration` FAILS on Floci (create ok, describe empty → Terraform "empty result"), so the module uses a launch template; a launch-template-backed ASG **genuinely launches EC2 instances and reconciles replacements** (`chaos kill-instance`: terminated → replaced in ~9s, probe-verified; quirk: replacement stays `Pending` in the ASG view while EC2 says `running`). DynamoDB scan/batch-write, s3 sync, and lambda invoke (the backup/restore + retry paths) are fully live.
+> - Docs: `docs/reliability.md` (RTO/RPO, chaos engineering, reconciler explainer, demo runbook).
 
 Interview Topics: RTO, RPO, chaos engineering, circuit breakers.
 

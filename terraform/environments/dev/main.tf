@@ -45,5 +45,15 @@ module "security" {
   uploads_bucket = var.uploads_bucket
 }
 
+# Reliability (Phase 15): Auto Scaling group + launch template — the ASG as
+# the instance-count reconciler. Floci note (ADR-13): launch-configuration
+# resources fail on Floci; launch templates persist and the launch-template-
+# backed ASG genuinely launches instances + reconciles replacements.
+module "autoscaling" {
+  source      = "../../modules/autoscaling"
+  asg_name    = "imageflow-asg"
+  environment = var.environment
+}
+
 # The notification depends on the Lambda existing (module graph handles it),
 # but storage's notification references compute's arn — fine as-is.

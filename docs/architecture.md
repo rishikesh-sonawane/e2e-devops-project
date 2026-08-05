@@ -204,6 +204,24 @@ Two orchestration targets for learning:
 > but does not enforce IAM authorization. Full details: `docs/security.md`
 > · demos: `scripts/security.sh` · audit: `scripts/security-audit.sh`.
 
+### 3.9 Reliability
+
+| Component | Role |
+|---|---|
+| Backup/restore | Paginated DynamoDB export + S3 sync → `data/backups/cloud-<ts>/` with manifest; restore via batch-write + sync with count verification |
+| DR drill | Probe data → backup → simulated loss → restore → verify → **measured RTO** (RPO = backup cadence) |
+| Failure injection | k3s pod kill (Deployment controller self-heal), API process kill (restart), corrupt upload → Lambda FAILED dead-letter → fix + event replay → PROCESSED |
+| Auto-scaling | k3s HPA + Deployment reconcilers (live); ASG `imageflow-asg` via Terraform `autoscaling` module — launch-template-backed, **reconciles replacements live** (ADR-13); `reconcile` command = explicit desired-vs-actual loop |
+
+> **Phase 15 delivered:** `scripts/reliability.sh` (backup · restore · drill ·
+> chaos kill-pod/kill-instance/kill-api/fail-image · scaling · reconcile
+> [--apply] · all) with 17 behavior tests; Terraform `modules/autoscaling`
+> (launch template + ASG — launch *configurations* fail on Floci, templates
+> persist and the ASG **genuinely reconciles replacements**, probe-verified
+> via `chaos kill-instance`); full write-up in `docs/reliability.md` (ADR-13).
+> DynamoDB scan/batch-write, s3 sync, and lambda invoke (the backup/restore +
+> retry paths) are fully live.
+
 ---
 
 ## 4. Floci Integration Deep Dive
