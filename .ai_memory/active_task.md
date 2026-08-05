@@ -1,7 +1,7 @@
 # Active Task State
 
 ## Current Focus
-**Phase 15 — Reliability COMPLETE** (`feature/p15-reliability`, commit + PR pending). All work on disk, verified green: **17/17 reliability behavior tests** (stateful fake aws + fake kubectl, incl. a live kill-api round trip against a real uvicorn), **56 script tests total**, shellcheck clean, bash -n clean, terraform fmt + validate clean, apply idempotent. **Live-verified on Floci:** backup/restore/drill (RTO ~1s, live-count verification), chaos kill-pod (Deployment self-heal) · kill-instance (**ASG replacement ~5–9s — genuinely live with launch templates**; launch configs fail on Floci) · kill-api (kill → health fails → deploy.sh restart → recovered) · fail-image (corrupt upload → FAILED dead-letter → fix + replay S3 event → PROCESSED, **exactly 1 ProcessedCount** — double-processing fixed by resetting PENDING before the fix upload). ASG now carries explicit AZs (us-east-1a/b, real-AWS-correct). Reviewer fixes applied (circular verify, fail-image double-process, AZs, ddb_import silent-skip). Docs: docs/reliability.md + ADR-13; README/roadmap/architecture/scripts-README updated. **Next: commit + push, open PR, squash-merge; then Phase 16 — GitOps.**
+**Phase 15 — Reliability FULLY SHIPPED — PR #2 squash-merged to main as `17a2523`, branch deleted.** CI green on the PR (all 4 jobs, first run) and on main post-merge. Phase 15 delivered `scripts/reliability.sh` (backup/restore/drill/chaos kill-pod|kill-instance|kill-api|fail-image/scaling/reconcile [--apply]) + 17 behavior tests, terraform `modules/autoscaling` (launch template + ASG, explicit AZs), docs/reliability.md + ADR-13. Key live-proven findings: ASG reconciler genuinely live with launch templates (~5–9s replacement); fail-image dead-letter → fix → S3-event replay → PROCESSED with exactly 1 ProcessedCount. Reviewer fixes applied (circular verification, fail-image double-process, AZs, ddb_import silent-skip). Rishi's Understanding.md + all READMEs/docs updated. **Next: Phase 16 — GitOps (Flux/ArgoCD-style declarative sync on the k3s cluster).**
 
 ## Immediate Next Steps
 1. [x] Phase 1 — FastAPI foundation: /health /version /metrics /config + config module + unit tests.
@@ -16,11 +16,11 @@
 10. [x] Phase 12 — Deployment strategies COMPLETE (`6397127`): rolling/rollback/canary/blue-green live on k3s.
 11. [x] Phase 13 — Monitoring & Observability COMPLETE (`98c51ec`): Prometheus metrics + CloudWatch metrics/logs/alarms + EventBridge→SNS; ADR-11.
 12. [x] Phase 14 — Security Hardening COMPLETE **AND MERGED** (`245516e` on main, PR #1, squash): KMS, Secrets Manager (+secrets-backed creds), Cognito (real JWT flow), WAF v2, least-privilege IAM, CI gates (pip-audit/gitleaks/trivy), audit script, ADR-12, docs/security.md. CI green; the new gates caught real issues (fixed: hermetic tests, gitleaks full-history, pip-less runtime image, buildx load:true).
-13. [x] Phase 15 — Reliability COMPLETE (`feature/p15-reliability`): reliability.sh (backup/restore/drill RTO, chaos kill-pod/kill-instance/kill-api/fail-image, scaling, reconcile [--apply]) + 17 behavior tests + modules/autoscaling (launch template + ASG with AZs) + docs/reliability.md + ADR-13. All live-verified on Floci (ASG replacement genuinely live). Commit + PR pending.
+13. [x] Phase 15 — Reliability COMPLETE **AND MERGED** (`17a2523` on main, PR #2, squash, branch deleted): reliability.sh (backup/restore/drill RTO, chaos kill-pod/kill-instance/kill-api/fail-image, scaling, reconcile [--apply]) + 17 behavior tests + modules/autoscaling (launch template + ASG with AZs) + docs/reliability.md + ADR-13. All live-verified on Floci; CI green on PR + main.
 14. [ ] Phase 16 — GitOps (Flux/ArgoCD-style declarative sync on k3s), then troubleshooting lab & interview prep.
 
 ## Blockers / Risks
 - Context loss mid-session — mitigated by continuous sync + `.ai_memory/session_log.md` (ADR-09); this session exercised recovery twice (Phase 14 on-disk-but-unrecorded; Phase 15 written as it went).
 - Floci must be started before any boto3 call (run `floci start` and `eval $(floci env)`).
 - `component-wise-architecture/` is a gitignored personal notes dir (ADR: excluded from audit scan).
-- `feature/p15-reliability` is uncommitted — commit + push + PR + squash-merge pending (docs/source-control.md).
+- (none) — main at `17a2523`; Phase 16 — GitOps next.
