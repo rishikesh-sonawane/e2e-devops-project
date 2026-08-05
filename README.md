@@ -103,6 +103,7 @@ curl -X POST -F "file=@photo.jpg" http://localhost:8000/api/v1/images
 | [docs/monitoring.md](docs/monitoring.md) | Phase 13: Prometheus /metrics + CloudWatch metrics/logs/alarms, SLIs/SLOs, demo runbook |
 | [docs/security.md](docs/security.md) | Phase 14: IAM least-privilege, Secrets Manager + KMS, Cognito JWT, WAF, CI security gates, threat model |
 | [docs/reliability.md](docs/reliability.md) | Phase 15: backup/restore drills with measured RTO, chaos/failure injection, auto-scaling reconciler, RPO/RTO |
+| [docs/manual-verification.md](docs/manual-verification.md) | Manual execution + verification runbook: static checks → live pipeline → k8s → CI/CD → observability → security → reliability → teardown |
 | [AGENTS.md](AGENTS.md) | AI agent operating rules + memory sync protocol |
 | `.ai_memory/` | Long-term project memory (state, tasks, ADRs) |
 
