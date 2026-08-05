@@ -41,7 +41,19 @@ COPY --from=builder /opt/venv /opt/venv
 COPY app ./app
 
 # Non-root runtime user (least privilege — AGENTS.md §3.5)
-RUN useradd --create-home --uid 1000 imageflow \
+#
+# pip is a build-time tool the API never needs at runtime — strip it (and
+# its vendored libs) from the runtime image: shrinks the image, reduces
+# attack surface, and clears the trivy findings in pip's *vendored* msgpack /
+# pkg_resources (setuptools), which are not application dependencies.
+RUN rm -rf \
+        /opt/venv/lib/python3.12/site-packages/pip \
+        /opt/venv/lib/python3.12/site-packages/pip-*.dist-info \
+        /usr/local/lib/python3.12/site-packages/pip \
+        /usr/local/lib/python3.12/site-packages/pip-*.dist-info \
+        /usr/local/lib/python3.12/site-packages/pkg_resources \
+        /usr/local/lib/python3.12/ensurepip \
+    && useradd --create-home --uid 1000 imageflow \
     && chown -R imageflow:imageflow /app
 USER imageflow
 
