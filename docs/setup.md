@@ -131,7 +131,7 @@ Freebuff and OpenCode drive the workflow, but these extensions keep the editor h
 
 ## 5. AI Memory Bank
 
-This repo includes a persistent memory system (see `AGENTS.md`). **The full how-to lives in [`.ai_memory/README.md`](../.ai_memory/README.md)** — start there:
+This repo includes a persistent memory system (see `AGENTS.md`). **The full how-to lives in [`.ai_memory/README.md`](https://github.com/rishikesh-sonawane/e2e-devops-project/blob/main/.ai_memory/README.md)** — start there:
 
 - `.ai_memory/README.md` — how-to guide (load → sync → commit → recover)
 - `.ai_memory/SYSTEM_CONTEXT.md` — structural anchor

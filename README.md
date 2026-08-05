@@ -4,12 +4,13 @@
 > An event-driven image pipeline wrapped in *everything* a real DevOps platform needs: Terraform infrastructure, a real Kubernetes cluster, dual-loop CI/CD, observability, security hardening, and reliability engineering — all verified live, all documented, all free.
 
 [![CI](https://github.com/rishikesh-sonawane/e2e-devops-project/actions/workflows/ci.yml/badge.svg)](https://github.com/rishikesh-sonawane/e2e-devops-project/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-browse%20the%20site-4D6BFE)](https://rishikesh-sonawane.github.io/e2e-devops-project/)
 [![Tests](https://img.shields.io/badge/tests-54%20pytest%20%2B%2059%20script-green)](tests/)
 [![Security](https://img.shields.io/badge/security-pip--audit%20%7C%20gitleaks%20%7C%20trivy-blue)]()
 [![IaC](https://img.shields.io/badge/IaC-Terraform-purple)]()
 [![Orchestration](https://img.shields.io/badge/Orchestration-Kubernetes%20%2B%20Helm-326CE5)]()
 [![Cost](https://img.shields.io/badge/cost-%240.00%2Fmonth-brightgreen)]()
-[![License](https://img.shields.io/badge/license-MIT-orange)]()
+[![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 
 ---
 
@@ -141,12 +142,15 @@ curl -s -F "file=@photo.jpg" http://localhost:8000/api/v1/images
 
 ## 📚 Documentation (the repo is documentation-first)
 
+> 🌐 **Prefer a browsable site?** The docs are published to GitHub Pages with search, sidebar navigation, and dark mode — **[imageflow.devops.docs](https://rishikesh-sonawane.github.io/e2e-devops-project/)** — built from `docs/` by [`.github/workflows/pages.yml`](.github/workflows/pages.yml) (MkDocs + Material).
+
 | Document | What it is |
 |---|---|
 | [docs/architecture.md](docs/architecture.md) | The technical blueprint — components, data flow, design decisions, AWS↔Floci mapping |
 | [docs/roadmap.md](docs/roadmap.md) | The 19-phase mastery roadmap — what's done, what's next, how to know you're done |
 | [docs/setup.md](docs/setup.md) | The free-tooling installation guide (Floci, AWS CLI, Terraform, Docker, kubectl, Helm) |
 | [docs/DEVELOPER.md](docs/DEVELOPER.md) | The developer's guide — repo map, dev loop, testing, conventions, contributing |
+| [docs/index.md](docs/index.md) | The docs landing page (home of the GitHub Pages site) |
 | [docs/source-control.md](docs/source-control.md) | Git workflow: GitHub Flow, conventional commits, squash merges, release tags |
 | [docs/deployment-strategies.md](docs/deployment-strategies.md) | Rolling / rollback / canary / blue-green — proven live on k3s |
 | [docs/monitoring.md](docs/monitoring.md) | Prometheus + CloudWatch: metrics, logs, alarms, SLI/SLO thinking |

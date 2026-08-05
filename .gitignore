@@ -78,6 +78,9 @@ Thumbs.db
 Rishi's Understanding.md
 component-wise-architecture/
 
+# ─── Build output (docs site) ────────────────────────────────────────
+site/
+
 # ─── Must NOT be ignored ───────────────────────────────────────────
 # .ai_memory/            <- project memory, commit it
 # .terraform.lock.hcl    <- dependency pinning, commit it

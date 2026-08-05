@@ -1,0 +1,72 @@
+# MkDocs site configuration — ImageFlow documentation portal.
+# Built and deployed to GitHub Pages by .github/workflows/pages.yml.
+
+site_name: ImageFlow — The DevOps Operating System
+site_description: A production-inspired DevOps platform built end-to-end for $0 — architecture, CI/CD, Kubernetes, security, reliability, and a full learning roadmap.
+site_url: https://rishikesh-sonawane.github.io/e2e-devops-project/
+repo_url: https://github.com/rishikesh-sonawane/e2e-devops-project
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  icon:
+    logo: material/cloud-check
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/rishikesh-sonawane/e2e-devops-project
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+nav:
+  - Home: index.md
+  - Get Started:
+      - Toolchain Setup: setup.md
+      - Manual Verification Runbook: manual-verification.md
+      - Developer Guide: DEVELOPER.md
+  - Architecture & Design:
+      - Architecture: architecture.md
+      - Source Control: source-control.md
+  - Roadmap:
+      - The 19-Phase Mastery Roadmap: roadmap.md
+  - Operations:
+      - Deployment Strategies: deployment-strategies.md
+      - Monitoring & Observability: monitoring.md
+      - Security: security.md
+      - Reliability: reliability.md
