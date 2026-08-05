@@ -2,11 +2,17 @@
 #
 # On a vX.Y.Z tag:
 #   1. Runs the full gate (ruff + shellcheck + pytest)
-#   2. Builds + pushes the API image to the registry tagged vX.Y.Z AND latest
+#   2. Builds the API image; pushes to the registry (tagged vX.Y.Z AND latest)
+#      ONLY when a Floci-connected registry is reachable
 #   3. Runs terraform validate (IaC is part of the release artifact)
+#   4. Creates the GitHub Release
 #
 # Floci-aware: registry + AWS API target localhost with dummy creds. Real
 # registries/AWS work with the same shape (set IMAGEFLOW_ECR_URI / AWS_*).
+# The image push targets the local Floci registry, which does not exist on
+# plain GitHub runners — it is gated behind the IMAGEFLOW_RUN_DEPLOY repo var
+# (same convention as deploy.yml), so a tag push on GitHub runs the gates,
+# build, IaC validation, and release creation, and skips the push.
 
 name: Release
 
@@ -68,7 +74,7 @@ jobs:
           V="${GITHUB_REF_NAME#v}"
           echo "version=${V}" >> "${GITHUB_OUTPUT}"
 
-      - name: Build + push image (tag + latest)
+      - name: Build + tag image
         run: |
           ECR="${IMAGEFLOW_ECR_URI:-host.docker.internal:5100/imageflow-api}"
           VERSION="${{ steps.version.outputs.version }}"
@@ -76,6 +82,12 @@ jobs:
             --build-arg GIT_SHA=${GITHUB_SHA} \
             --build-arg BUILD_TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ) .
           docker tag "${ECR}:${VERSION}" "${ECR}:latest"
+
+      - name: Push image to registry (Floci-connected runner only)
+        if: ${{ vars.IMAGEFLOW_RUN_DEPLOY == 'true' || github.event_name == 'workflow_dispatch' }}
+        run: |
+          ECR="${IMAGEFLOW_ECR_URI:-host.docker.internal:5100/imageflow-api}"
+          VERSION="${{ steps.version.outputs.version }}"
           docker push "${ECR}:${VERSION}"
           docker push "${ECR}:latest"
 
@@ -95,6 +107,19 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: ImageFlow ${{ steps.version.outputs.version }}
           body: |
-            Automated release built and pushed by the outer-loop CD.
-            Image: `imageflow-api:${{ steps.version.outputs.version }}`
+            ## ImageFlow ${{ steps.version.outputs.version }} 🚀
+
+            First stable release of the **DevOps Operating System** — a production-inspired image pipeline
+            (FastAPI + S3 + Lambda + DynamoDB + SNS) wrapped in the full platform-engineering surface,
+            built and verified end-to-end on Floci for **$0**.
+
+            ### What's in v1
+            - **App** — FastAPI image pipeline: upload → S3 → Lambda (Pillow) → PROCESSED + SNS
+            - **IaC** — Terraform: 7 modules, remote state + locking, idempotent plans
+            - **Kubernetes** — real k3s + Helm chart, HPA, rolling/rollback/canary/blue-green proven live
+            - **CI/CD** — dual loop: GitHub Actions (outer) + CodePipeline→CodeBuild→CodeDeploy (inner)
+            - **Observability** — Prometheus /metrics + CloudWatch metrics/logs/alarms + alerting
+            - **Security** — KMS, Secrets Manager, Cognito JWTs, WAF v2, least-privilege IAM, CI gates
+            - **Reliability** — measured RTO drills, chaos injection, auto-scaling reconcilers
+            - **Docs** — GitHub Pages site, architecture, runbook, developer guide, 15-phase roadmap
           generate_release_notes: true
