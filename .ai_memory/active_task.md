@@ -1,7 +1,7 @@
 # Active Task State
 
 ## Current Focus
-**GITHUB PAGES DOCS SITE LIVE — PR #8 merged `a9387d7`:** MkDocs + Material theme docs portal (mkdocs.yml, docs/index.md, requirements-docs.txt, .github/workflows/pages.yml) deployed to **https://rishikesh-sonawane.github.io/e2e-devops-project/** — all 11 pages verified HTTP 200, search index works, dark-mode toggle present, Material CSS loaded. Strict build passes (`mkdocs build --strict`); fixed ../ links in architecture.md + setup.md for site-friendliness. Workflow name is `pages.yml` (display name "docs-site"). README badge + docs-table row added; `site/` gitignored.
+**AI-DEV RETROSPECTIVE DONE — PR #9 merged `4c97339`:** new `docs/ai-assisted-development.md` (candid retrospective of building ImageFlow with AI: incident log — cross-env drift, emulator quirks, AI-introduced bugs, drill-found bugs, harness artifacts; where the human was irreplaceable; the working loop; anti-patterns; next-project playbook; scorecard). Cross-linked mkdocs nav + index + README; strict build green; CI green (4 checks). Prior: GitHub Pages docs site (PR #8 `a9387d7`), portfolio docs (PR #7 `6c1be72`). Main clean at `4c97339`. **Next: Phase 16 — GitOps (Flux/ArgoCD-style declarative sync on the k3s cluster).**
 
 Prior: portfolio docs (PR #7 `6c1be72` — README/architecture rewrite, DEVELOPER.md, MIT LICENSE, repo description + 16 topics), manual runbook walk-through (PR #6 `abb9308`), docs update (PR #5 `704dc22`), live drill + 4 fixes (PR #4 `eb20ed1`), runbook (PR #3 `5a88bf1`). Main clean. **Next: Phase 16 — GitOps (Flux/ArgoCD-style declarative sync on the k3s cluster).**
 
