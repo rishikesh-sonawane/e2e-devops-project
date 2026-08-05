@@ -18,6 +18,8 @@ Around that deliberately simple core sits the *real* subject of the project — 
 
 ---
 
+> **🌐 Browsing the site version?** This page is published to GitHub Pages — links are adapted for the site. The raw Markdown in the repo also works on GitHub.
+
 ## 2. Why this architecture (the three core decisions)
 
 ### 2.1 Event-driven, not request-driven — because that's how real systems scale
@@ -237,10 +239,10 @@ KMS encryption keys · Secrets Manager (the app can source AWS credentials from 
 
 ## 9. Related reading
 
-- [README.md](../README.md) — the project overview and quick start
-- [LICENSE](../LICENSE) — MIT
-- [docs/DEVELOPER.md](DEVELOPER.md) — repo map, dev loop, testing, conventions
-- [docs/roadmap.md](roadmap.md) — the 19-phase mastery roadmap
-- [docs/manual-verification.md](manual-verification.md) — run and verify every layer by hand
+- [index.md](index.md) — the docs home and project overview
+- [DEVELOPER.md](DEVELOPER.md) — repo map, dev loop, testing, conventions
+- [roadmap.md](roadmap.md) — the 19-phase mastery roadmap
+- [manual-verification.md](manual-verification.md) — run and verify every layer by hand
 - Phase write-ups: [deployment-strategies.md](deployment-strategies.md) · [monitoring.md](monitoring.md) · [security.md](security.md) · [reliability.md](reliability.md)
-- [.ai_memory/architectural_decisions.md](../.ai_memory/architectural_decisions.md) — the full ADR log
+- [The full ADR log](https://github.com/rishikesh-sonawane/e2e-devops-project/blob/main/.ai_memory/architectural_decisions.md)
+- [README.md](https://github.com/rishikesh-sonawane/e2e-devops-project/blob/main/README.md) · [LICENSE](https://github.com/rishikesh-sonawane/e2e-devops-project/blob/main/LICENSE)
