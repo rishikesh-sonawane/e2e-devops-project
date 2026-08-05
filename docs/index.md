@@ -24,6 +24,7 @@
 | **[:material-chart-line: Monitoring & Observability](monitoring.md)** | Prometheus + CloudWatch metrics, logs, alarms, SLI/SLO thinking |
 | **[:material-lock: Security](security.md)** | KMS, Secrets Manager, Cognito JWT, WAF, IAM, CI security gates |
 | **[:material-shield-check: Reliability](reliability.md)** | Measured RTO/RPO drills, chaos engineering, auto-scaling reconcilers |
+| **[:material-book-open-variant: Wiki](https://github.com/rishikesh-sonawane/e2e-devops-project/wiki)** | Companion wiki — quick start, FAQ, learning journey (living content, outside the release cycle) |
 
 ---
 

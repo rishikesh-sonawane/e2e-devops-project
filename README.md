@@ -151,6 +151,7 @@ curl -s -F "file=@photo.jpg" http://localhost:8000/api/v1/images
 | [docs/setup.md](docs/setup.md) | The free-tooling installation guide (Floci, AWS CLI, Terraform, Docker, kubectl, Helm) |
 | [docs/DEVELOPER.md](docs/DEVELOPER.md) | The developer's guide — repo map, dev loop, testing, conventions, contributing |
 | [docs/index.md](docs/index.md) | The docs landing page (home of the GitHub Pages site) |
+| [Wiki](https://github.com/rishikesh-sonawane/e2e-devops-project/wiki) | Companion wiki — quick start, FAQ, learning journey (living content) |
 | [docs/source-control.md](docs/source-control.md) | Git workflow: GitHub Flow, conventional commits, squash merges, release tags |
 | [docs/deployment-strategies.md](docs/deployment-strategies.md) | Rolling / rollback / canary / blue-green — proven live on k3s |
 | [docs/monitoring.md](docs/monitoring.md) | Prometheus + CloudWatch: metrics, logs, alarms, SLI/SLO thinking |
