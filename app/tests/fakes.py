@@ -119,6 +119,11 @@ class FakeDDB:
         item = kwargs["Item"]
         self.items.setdefault(table, {})[item["image_id"]["S"]] = item
 
+    def delete_item(self, **kwargs) -> None:
+        table = kwargs["TableName"]
+        key = kwargs["Key"]["image_id"]["S"]
+        self.items.get(table, {}).pop(key, None)
+
     def get_item(self, **kwargs) -> dict:
         table = kwargs["TableName"]
         key = kwargs["Key"]["image_id"]["S"]

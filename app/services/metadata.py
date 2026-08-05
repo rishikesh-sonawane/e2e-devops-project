@@ -66,6 +66,12 @@ def get_record(client, image_id: str) -> dict | None:
     return _deserialize(item) if item else None
 
 
+def delete_record(client, image_id: str) -> None:
+    """Remove one record (rollback for a failed upload — see images.py)."""
+    settings = get_settings()
+    client.delete_item(TableName=settings.metadata_table, Key={"image_id": {"S": image_id}})
+
+
 def list_records(client, limit: int = 20, last_image_id: str | None = None) -> dict:
     """Scan the catalogue with cursor pagination."""
     settings = get_settings()

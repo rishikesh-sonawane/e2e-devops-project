@@ -36,10 +36,20 @@ def ensure_buckets(client) -> None:
             client.create_bucket(Bucket=bucket)
 
 
+def original_key(image_id: str, filename: str) -> str:
+    """Deterministic S3 key for an uploaded original.
+
+    Single source of truth for the key shape (the API route needs it BEFORE the
+    object exists, so the metadata record can be written first — see
+    app/routes/images.py upload_image for why ordering matters).
+    """
+    return f"uploads/{image_id}/{filename}"
+
+
 def upload_original(client, image_id: str, filename: str, data: bytes, content_type: str) -> str:
     """Store the original image and return its S3 key."""
     settings = get_settings()
-    key = f"uploads/{image_id}/{filename}"
+    key = original_key(image_id, filename)
     client.put_object(
         Bucket=settings.uploads_bucket,
         Key=key,

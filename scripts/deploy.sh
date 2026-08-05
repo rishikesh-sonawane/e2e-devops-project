@@ -76,7 +76,7 @@ step_terraform() {
 }
 
 step_api() {
-    local uvicorn pid i
+    local uvicorn pid i real
     if [ -x "$REPO_ROOT/.venv/bin/uvicorn" ]; then
         uvicorn="$REPO_ROOT/.venv/bin/uvicorn"
     else
@@ -84,13 +84,30 @@ step_api() {
         uvicorn=uvicorn
     fi
     mkdir -p "$REPO_ROOT/data"
+    # The backgrounded compound `cd && nohup uvicorn` makes $! the WRAPPER
+    # subshell pid on macOS (nohup forks), so the pidfile can point at a dead
+    # process — `chaos kill-api` would then fail with "not running". We
+    # resolve the REAL listener pid below, once the app answers /health.
     (cd "$REPO_ROOT" && nohup "$uvicorn" app.main:app --host "$API_HOST" --port "$API_PORT" >> data/api.log 2>&1 & echo "$!" > data/api.pid)
     pid="$(cat "$REPO_ROOT/data/api.pid" 2>/dev/null || true)"
     info "api: starting uvicorn (pid ${pid:-?}) — log: $REPO_ROOT/data/api.log"
 
     for ((i = 1; i <= 10; i++)); do
         if curl -s --max-time 1 "http://$API_HOST:$API_PORT/health" | grep -q '"status"[[:space:]]*:[[:space:]]*"ok"'; then
-            info "api: healthy after ${i}s"
+            # Overwrite the pidfile with the process actually listening on the
+            # port (lsof, fallback pgrep) so kill-api targets the real server.
+            real="$(lsof -ti "tcp:$API_PORT" -sTCP:LISTEN 2>/dev/null | head -1 || true)"
+            if [ -z "$real" ]; then
+                # Fallback when lsof is unavailable: match our own uvicorn on
+                # THIS port only (never an unrelated instance on another port).
+                real="$(pgrep -f "uvicorn app.main:app.*--port $API_PORT" 2>/dev/null | head -1 || true)"
+            fi
+            if [ -n "$real" ]; then
+                echo "$real" > "$REPO_ROOT/data/api.pid"
+                info "api: healthy after ${i}s (pid $real)"
+            else
+                info "api: healthy after ${i}s (pid ${pid:-?})"
+            fi
             return 0
         fi
         sleep 1

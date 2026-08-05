@@ -52,6 +52,29 @@ def test_upload_empty_file_rejected(fake_cloud) -> None:
     assert resp.status_code == 400
 
 
+def test_upload_failure_rolls_back_record(fake_cloud, monkeypatch) -> None:
+    """A failed S3 upload must not leave a zombie PENDING record.
+
+    The record is written BEFORE the object so the S3 event always finds its
+    PENDING item — but if the upload then fails, the record is rolled back
+    (delete_record) instead of stranding an unresolvable PENDING item.
+    """
+    fake_s3, fake_ddb, _cw = fake_cloud
+
+    def boom(client, **kwargs) -> None:  # noqa: ARG001
+        raise RuntimeError("s3 down")
+
+    monkeypatch.setattr(fake_s3, "put_object", boom)
+
+    resp = client.post(
+        "/api/v1/images", files={"file": ("photo.png", PNG_1X1, "image/png")}
+    )
+    assert resp.status_code == 503
+    # No record was left behind (no zombie PENDING item for a failed upload).
+    table_items = list(fake_ddb.items.get("ImageFlowMetadata", {}).values())
+    assert table_items == []
+
+
 def test_get_image_returns_presigned_url(fake_cloud) -> None:
     created = client.post(
         "/api/v1/images", files={"file": ("photo.png", PNG_1X1, "image/png")}

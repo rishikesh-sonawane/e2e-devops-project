@@ -45,6 +45,12 @@ resource "aws_cloudwatch_metric_alarm" "failed_images" {
     Project     = "imageflow"
     Environment = var.environment
   }
+  # Floci quirk (probe-verified): datapoints_to_alarm is accepted but not
+  # persisted (returns null on refresh) while the provider defaults it to 1 —
+  # ignoring keeps the plan idempotent ("No changes"). Same class as ADR-12/13.
+  lifecycle {
+    ignore_changes = [datapoints_to_alarm]
+  }
 }
 
 # Uploads rejected with an error (503 cloud-unavailable path) — a red flag
@@ -64,6 +70,10 @@ resource "aws_cloudwatch_metric_alarm" "upload_errors" {
   tags = {
     Project     = "imageflow"
     Environment = var.environment
+  }
+  # Floci quirk — see failed_images (datapoints_to_alarm not persisted).
+  lifecycle {
+    ignore_changes = [datapoints_to_alarm]
   }
 }
 
